@@ -3,7 +3,7 @@ Allows to scale VMs considering the number of active game rooms
 
 ## Motivation
 
-Dedicated game servers are stateful, thus they're differ pretty much from typical statless VMs. You can't just shut down VM if somebody is playing at the moment. This project tries to solve the issue.
+Dedicated game servers are stateful, thus they differ pretty much from typical statless VMs. You can't just shut down VM if somebody is playing at the moment. This project tries to solve the issue.
 
 ## Overview
 
