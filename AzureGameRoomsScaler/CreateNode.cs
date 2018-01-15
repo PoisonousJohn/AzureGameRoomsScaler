@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -30,6 +29,9 @@ namespace AzureGameRoomsScaler
             {
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Node parameters <region, size> are required"));
             }
+
+            AzureMgmtCredentials.instance.Azure.Deployments.Define("asdf").WithExistingResourceGroup("asdf").WithTemplate()
+            //AzureMgmtCredentials.instance.Azure.VirtualMachines.CreateAsync()
 
             return req.CreateResponse(HttpStatusCode.OK);
         }
