@@ -14,6 +14,10 @@ Dedicated game servers are stateful, thus they differ pretty much from typical s
 
 ## Overview
 
-AzureGameRoomsScaler is just a tiny application which will send a custom metric `Game rooms number` to Azure, so one can leverage that metric when setting up scale rules.
+AzureGameRoomsScaler is just a tiny application which can be plugged to your exising system which monitors server resources.
 
-This metric can be useful in both scale out and scale in cases.
+It will give you opportunity to:
+- Roll out new VM based on a specific image
+- Gracefully shutdown specific VM, waiting until there would be no game sessions running
+
+To make gracefull shutdown work, you need to report game rooms number per VM when it changes.
