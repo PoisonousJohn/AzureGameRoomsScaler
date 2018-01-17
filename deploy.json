@@ -11,7 +11,10 @@
     },
     "parameters": {
         "name": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "It's your Azure Functions domain name"
+            }
         },
         "location": {
             "type": "string"

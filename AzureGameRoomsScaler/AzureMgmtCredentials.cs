@@ -8,11 +8,6 @@ namespace AzureGameRoomsScaler
 {
     public class AzureMgmtCredentials
     {
-        //public const string ManagementURI = "https://management.core.windows.net/";
-        //public const string BaseURL = "https://management.azure.com/";
-        //public const string AuthURL = "https://login.windows.net/";
-        //public const string GraphURL = "https://graph.windows.net/";
-
         public IAzure Azure { get; private set; }
 
 

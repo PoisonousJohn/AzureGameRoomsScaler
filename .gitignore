@@ -260,4 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 
-deploy.parameters.json
+*.parameters.json
+*.params.json
