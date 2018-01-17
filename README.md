@@ -2,7 +2,7 @@
 
 
 # AzureGameRoomsScaler
-Allows to scale VMs considering the number of active game rooms
+Provides API to deploy new VMs and deallocate them considering the number of active game rooms
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FPoisonousJohn%2FAzureGameRoomsScaler%2Fmaster%2Fdeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
