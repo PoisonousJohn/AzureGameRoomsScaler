@@ -84,6 +84,7 @@
                         "ClientId" : "[parameters('ClientId')]",
                         "ClientSecret" : "[parameters('ClientSecret')]",
                         "GAMESERVER_VM_IMAGE" : "[parameters('DefaultVMImage')]",
+                        "REPORT_GAMEROOMS_URL" : "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('name'), 'ReportGameRooms'),'2015-08-01').trigger_url]",
                         "GAMESERVER_PORT_RANGE" : "[parameters('GameServerPortRange')]"
                     }
                  },
