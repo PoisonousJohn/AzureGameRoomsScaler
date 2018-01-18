@@ -45,12 +45,14 @@ namespace AzureGameRoomsScaler
 
             if (string.IsNullOrEmpty(nodeParams.Size) || string.IsNullOrEmpty(nodeParams.Region))
             {
+                log.Error("Missing size or region params");
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Node parameters <region, size> are required"));
             }
 
             if (string.IsNullOrEmpty(nodeParams.Image) &&
                 string.IsNullOrEmpty(ConfigurationManager.AppSettings["GAMESERVER_VM_IMAGE"]?.ToString()))
             {
+                log.Error("Missing image param");
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Image for vm should be specified when deploying"));
             }
 
@@ -61,6 +63,7 @@ namespace AzureGameRoomsScaler
             if (string.IsNullOrEmpty(nodeParams.PortRange) &&
                 string.IsNullOrEmpty(ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"]?.ToString()))
             {
+                log.Error("Missing port range");
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Port range for game server should be specified when deploying"));
             }
 
