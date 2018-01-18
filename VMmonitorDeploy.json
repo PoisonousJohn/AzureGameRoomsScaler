@@ -2,210 +2,187 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-    "appName": {
-              "type": "string",
-              "metadata": {
-                  "description": "The name of the function app that you wish to create. This will be used to monitor the lifecycle of our VMs. Needs to be globally unique, this will determine your Function's DNS."
-              }
-          },
-          "hostingPlanName": {
-              "type": "string",
-              "metadata": {
-                  "description": "The name of the App Service plan that you wish to create. Pick a distinctive name."
-              }
-          },
-      "activityLogAlertName": {
-        "type": "string",
-        "metadata": {
-          "description": "Unique name (within the Resource Group) for the Activity log alert."
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the function app that you wish to create. This will be used to monitor the lifecycle of our VMs. Needs to be globally unique, this will determine your Function's DNS."
+            }
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the App Service plan that you wish to create. Pick a distinctive name."
+            }
+        },
+        "activityLogAlertName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Activity log alert."
+            }
+        },
+        "activityLogAlertEnabled": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Indicates whether or not the alert is enabled."
+            }
+        },
+        "actionGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Action group."
+            }
+        },
+        "actionGroupShortName": {
+            "type": "string",
+            "metadata": {
+                "description": "Short name (maximum 12 characters) for the Action group."
+            }
         }
-      },
-      "activityLogAlertEnabled": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Indicates whether or not the alert is enabled."
-        }
-      },
-      "resourceGroupToMonitor": {
-        "type": "string",
-        "metadata": {
-          "description": "Resource group to monitor."
-        }
-      },
-      "actionGroupName": {
-        "type": "string",
-        "metadata": {
-          "description": "Unique name (within the Resource Group) for the Action group."
-        }
-      },
-      "actionGroupShortName": {
-        "type": "string",
-        "metadata": {
-          "description": "Short name (maximum 12 characters) for the Action group."
-        }
-      },
-      "functionURL": {
-      "type": "string",
-      "metadata": {
-          "description":"Azure Function webhook URL"
-      }
-      }
     },
     "variables": {
-          "functionAppName": "[parameters('appName')]",
-          "hostingPlanName": "[parameters('hostingPlanName')]",
-          "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'vmmonitor')]",
-          "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-          "repoURL": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
-      },
-    "resources": [ 
-    {
-              "type": "microsoft.insights/components",
-              "apiVersion": "2015-05-01",
-              "name": "[variables('functionAppName')]",
-              "location": "South Central US",
-              "properties": {
-                  "ApplicationId": "[variables('functionAppName')]"
-              }
-          },
-          {
-              "type": "Microsoft.Storage/storageAccounts",
-              "name": "[variables('storageAccountName')]",
-              "apiVersion": "2016-12-01",
-              "location": "[resourceGroup().location]",
-              "kind": "Storage",
-              "sku": {
-                  "name": "[parameters('storageAccountType')]"
-              }
-          },
-          {
-              "type": "Microsoft.Web/serverfarms",
-              "apiVersion": "2015-04-01",
-              "name": "[variables('hostingPlanName')]",
-              "location": "[resourceGroup().location]",
-              "properties": {
-                  "name": "[variables('hostingPlanName')]",
-                  "computeMode": "Dynamic",
-                  "sku": "Dynamic"
-              }
-          },
-          {
-              "apiVersion": "2015-08-01",
-              "type": "Microsoft.Web/sites",
-              "name": "[variables('functionAppName')]",
-              "location": "[resourceGroup().location]",
-              "kind": "functionapp",
-              "dependsOn": [
-                  "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-                  "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                  "[resourceId('microsoft.insights/components/', variables('functionAppName'))]"
-              ],
-              "properties": {
-                  "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-                  "siteConfig": {
-                      "appSettings": [{
-                              "name": "AzureWebJobsDashboard",
-                              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
-                          },
-                          {
-                              "name": "AzureWebJobsStorage",
-                              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
-                          },
-                          {
-                              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
-                          },
-                          {
-                              "name": "WEBSITE_CONTENTSHARE",
-                              "value": "[toLower(variables('functionAppName'))]"
-                          },
-                          {
-                              "name": "FUNCTIONS_EXTENSION_VERSION",
-                              "value": "~1"
-                          },
-                          {
-                              "name": "WEBSITE_NODE_DEFAULT_VERSION",
-                              "value": "6.5.0"
-                          },
-                          {
-                              "name":"APPINSIGHTS_INSTRUMENTATIONKEY",
-                              "value":"[reference(resourceId('microsoft.insights/components/', variables('functionAppName')), '2015-05-01').InstrumentationKey]"
-                          },
-                          {
-                              "name": "Project",
-                              "value": "VMmonitor"
-                          }
-                      ]
-                  }
-              },
-              "resources": [{
-                  "apiVersion": "2015-08-01",
-                  "name": "web",
-                  "type": "sourcecontrols",
-                  "dependsOn": [
-                      "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
-                  ],
-                  "properties": {
-                      "RepoUrl": "[variables('repoURL')]",
-                      "branch": "master",
-                      "IsManualIntegration": true
-                  }
-              }]
-          },
-      {
-        "type": "Microsoft.Insights/actionGroups",
-        "apiVersion": "2017-04-01",
-        "name": "[parameters('actionGroupName')]",
-        "location": "Global",
-        "dependsOn": [
-                      "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
-                  ],
-        "properties": {
-          "groupShortName": "[parameters('actionGroupShortName')]",
-          "enabled": true,
-          "webhookReceivers": [
-            {
-              "name": "functionHook",
-              "serviceUri": "[listsecrets(resourceId('Microsoft.Web/sites/functions', variables('functionAppName'), parameters('functionName')),'2015-08-01').trigger_url]"
+        "functionAppName": "[parameters('appName')]",
+        "hostingPlanName": "[parameters('hostingPlanName')]",
+        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'vmmonitor')]",
+        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "repoURL": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
+    },
+    "resources": [{
+            "type": "microsoft.insights/components",
+            "apiVersion": "2015-05-01",
+            "name": "[variables('functionAppName')]",
+            "location": "South Central US",
+            "properties": {
+                "ApplicationId": "[variables('functionAppName')]"
             }
-          ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "kind": "Storage",
+            "sku": {
+                "name": "Standard_LRS"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-04-01",
+            "name": "[variables('hostingPlanName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "computeMode": "Dynamic",
+                "sku": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[variables('functionAppName')]",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('microsoft.insights/components/', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "siteConfig": {
+                    "appSettings": [{
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(variables('functionAppName'))]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~1"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "6.5.0"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('functionAppName')), '2015-05-01').InstrumentationKey]"
+                        }
+                    ]
+                }
+            },
+            "resources": [{
+                "apiVersion": "2015-08-01",
+                "name": "web",
+                "type": "sourcecontrols",
+                "dependsOn": [
+                    "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
+                ],
+                "properties": {
+                    "RepoUrl": "[variables('repoURL')]",
+                    "branch": "master",
+                    "IsManualIntegration": true
+                }
+            }]
+        },
+        {
+            "type": "Microsoft.Insights/actionGroups",
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('actionGroupName')]",
+            "location": "Global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/sourcecontrols', variables('functionAppName'), 'web')]"
+            ],
+            "properties": {
+                "groupShortName": "[parameters('actionGroupShortName')]",
+                "enabled": true,
+                "webhookReceivers": [{
+                    "name": "functionHook",
+                    "serviceUri": "[listsecrets(resourceId('Microsoft.Web/sites/functions', variables('functionAppName'), 'VMmonitor'),'2015-08-01').trigger_url]"
+                }]
+            }
+        },
+        {
+            "type": "Microsoft.Insights/activityLogAlerts",
+            "apiVersion": "2017-04-01",
+            "name": "[parameters('activityLogAlertName')]",
+            "location": "Global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Insights/actionGroups',parameters('actionGroupName'))]"
+            ],
+            "properties": {
+                "enabled": "[parameters('activityLogAlertEnabled')]",
+                "scopes": [
+                    "[subscription().id]"
+                ],
+                "condition": {
+                    "allOf": [{
+                            "field": "category",
+                            "equals": "Administrative"
+                        },
+                        {
+                            "field": "resourceType",
+                            "equals": "Microsoft.Compute/VirtualMachines"
+                        }
+                    ]
+                },
+                "actions": {
+                    "actionGroups": [{
+                        "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups',parameters('actionGroupName'))]"
+                    }]
+                }
+            }
         }
-      },  
-      {
-        "type": "Microsoft.Insights/activityLogAlerts",
-        "apiVersion": "2017-04-01",
-        "name": "[parameters('activityLogAlertName')]",      
-        "location": "Global",
-        "dependsOn": [
-                  "[resourceId('Microsoft.Insights/actionGroups',parameters('actionGroupName'))]"
-              ],
-        "properties": {
-          "enabled": "[parameters('activityLogAlertEnabled')]",
-          "scopes": [
-               "[subscription().id]"
-          ],        
-          "condition": {
-            "allOf": [
-              {
-                "field": "category",
-                "equals": "Administrative"
-              },
-              {
-                "field": "resourceType",
-                "equals": "Microsoft.Compute/VirtualMachines"
-              }
-            ] 
-          },
-          "actions": {
-            "actionGroups": 
-            [
-              {
-                "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups',parameters('actionGroupName'))]"
-              }
-            ]
-          }
-        }
-      }
     ]
-  }
+}
