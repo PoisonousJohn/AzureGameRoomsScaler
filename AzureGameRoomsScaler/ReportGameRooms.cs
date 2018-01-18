@@ -12,10 +12,10 @@ using Newtonsoft.Json;
 namespace AzureGameRoomsScaler
 {
 
-    public static class CreateNode
+    public static class ReportGameRooms
     {
         [FunctionName("ReportGameRooms")]
-        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "report/gamerooms")]HttpRequestMessage req, TraceWriter log)
+        public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "report/gamerooms")]HttpRequestMessage req, TraceWriter log)
         {
             return req.CreateResponse(HttpStatusCode.OK);
         }

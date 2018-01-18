@@ -37,7 +37,7 @@ namespace AzureGameRoomsScaler
     }
     public static class CreateNode
     {
-        [FunctionName("Function1")]
+        [FunctionName("CreateNode")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "node/create")]HttpRequestMessage req, TraceWriter log, ExecutionContext context)
         {
             var content = await req.Content.ReadAsStringAsync();
