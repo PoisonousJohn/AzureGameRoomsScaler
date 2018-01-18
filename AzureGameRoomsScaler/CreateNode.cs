@@ -86,7 +86,7 @@ namespace AzureGameRoomsScaler
             var deployment = await AzureMgmtCredentials.instance.Azure.Deployments
                 .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
                 .WithExistingResourceGroup(nodeParams.ResourceGroup)
-                .WithTemplate(System.IO.File.ReadAllText("vmDeploy.json"))
+                .WithTemplate(System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json"))
                 .WithParameters(parameters)
                 .WithMode(DeploymentMode.Incremental)
                 .CreateAsync();
