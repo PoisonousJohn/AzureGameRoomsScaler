@@ -84,7 +84,7 @@
                         "ClientId" : "[parameters('ClientId')]",
                         "ClientSecret" : "[parameters('ClientSecret')]",
                         "GAMESERVER_VM_IMAGE" : "[parameters('DefaultVMImage')]",
-                        "GAMESERVER_PORTRANGE" : "[parameters('GameServerPortRange')]"
+                        "GAMESERVER_PORT_RANGE" : "[parameters('GameServerPortRange')]"
                     }
                  },
                  {
