@@ -73,13 +73,15 @@ namespace AzureGameRoomsScaler
 
 
             log.Info("Creating VM");
+            var appSettings = ConfigurationManager.AppSettings;
 
             var parameters = JsonConvert.SerializeObject(new Dictionary<string, Dictionary<string, object>> {
                     { "location", new Dictionary<string, object> { { "value", nodeParams.Region } } },
                     { "virtualMachineSize",  new Dictionary<string, object> { { "value", nodeParams.Size } } },
-                    { "adminUserName",   new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_NAME"]?.ToString() ?? "default_gs_admin" } } },
-                    { "adminPublicKey", new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_KEY"]?.ToString() ?? System.IO.File.ReadAllText(context.FunctionAppDirectory + "/default_key_rsa.pub") } } },
+                    { "adminUserName",   new Dictionary<string, object> { { "value", appSettings["VM_ADMIN_NAME"]?.ToString() ?? "default_gs_admin" } } },
+                    { "adminPublicKey", new Dictionary<string, object> { { "value", appSettings["VM_ADMIN_KEY"]?.ToString() ?? System.IO.File.ReadAllText(context.FunctionAppDirectory + "/default_key_rsa.pub") } } },
                     { "gameServerPortRange", new Dictionary<string, object> { { "value", portRange } } },
+                    { "reportGameroomsUrl", new Dictionary<string, object> { { "value", appSettings["REPORT_GAMEROOMS_URL"]?.ToString() } } },
                     { "vmImage", new Dictionary<string, object> { { "value", vmImage } } },
                 });
 

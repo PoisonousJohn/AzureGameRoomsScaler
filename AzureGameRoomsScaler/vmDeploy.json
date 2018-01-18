@@ -19,6 +19,9 @@
             "type": "string",
             "defaultValue": ""
         },
+        "reportGameroomsUrl" : {
+            "type": "string"
+        },
         "vmImage": {
             "type": "string"
         }
@@ -203,7 +206,30 @@
                     }
                 ]
             }
-        }
+        },
+        {
+            "name": "fillEnvVarWithFuncHost",
+            "type": "extensions",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+              "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+            ],
+            "properties": {
+              "publisher": "Microsoft.Azure.Extensions",
+              "type": "CustomScript",
+              "typeHandlerVersion": "2.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "fileUris": [
+                  "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/registerEnvVar.sh"
+                ]
+              },
+              "protectedSettings": {
+                "commandToExecute": "[concat('sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\"')]"
+              }
+            }
+          }
     ],
     "outputs": {
 
