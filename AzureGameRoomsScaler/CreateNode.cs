@@ -56,7 +56,7 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Image for vm should be specified when deploying"));
             }
 
-            string vmImage = string.IsNullOrEmpty(nodeParams.Image)
+            string vmImage = !string.IsNullOrEmpty(nodeParams.Image)
                                 ? nodeParams.Image
                                 : ConfigurationManager.AppSettings["GAMESERVER_VM_IMAGE"].ToString();
 
@@ -67,7 +67,7 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Port range for game server should be specified when deploying"));
             }
 
-            string portRange = string.IsNullOrEmpty(nodeParams.PortRange)
+            string portRange = !string.IsNullOrEmpty(nodeParams.PortRange)
                                 ? nodeParams.PortRange
                                 : ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"].ToString();
 
