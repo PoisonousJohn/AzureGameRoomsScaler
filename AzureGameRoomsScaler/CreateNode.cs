@@ -78,7 +78,7 @@ namespace AzureGameRoomsScaler
                     { "location", new Dictionary<string, object> { { "value", nodeParams.Region } } },
                     { "virtualMachineSize",  new Dictionary<string, object> { { "value", nodeParams.Size } } },
                     { "adminUserName",   new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_NAME"]?.ToString() ?? "default_gs_admin" } } },
-                    { "adminPublicKey", new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_KEY"]?.ToString() ?? System.IO.File.ReadAllText("default_key_rsa.pub") } } },
+                    { "adminPublicKey", new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_KEY"]?.ToString() ?? System.IO.File.ReadAllText(ConfigurationManager.AppSettings["AzureWebJobsScriptRoot"] + "/default_key_rsa.pub") } } },
                     { "gameServerPortRange", new Dictionary<string, object> { { "value", portRange } } },
                     { "vmImage", new Dictionary<string, object> { { "value", vmImage } } },
                 });
