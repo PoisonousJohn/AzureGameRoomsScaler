@@ -31,6 +31,20 @@
                 "description": "Service Principal Secret which can be used by functions to create VMs"
             }
         },
+        "DefaultVMImage" : {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If you want server VMs to be deployed with default image, specify it in this parameter. You can override it during deployment of specific VM"
+            }
+        },
+        "GameServerPortRange" : {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If your game server needs specific port range by default, specify it here. You can override this during deployment of specific VM"
+            }
+        },
         "FuncsGitRepo" : {
             "type": "string",
             "defaultValue": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
@@ -68,7 +82,9 @@
                         "SubscriptionId" : "[variables('subscriptionId')]",
                         "Tenant" : "[variables('tenant')]",
                         "ClientId" : "[parameters('ClientId')]",
-                        "ClientSecret" : "[parameters('ClientSecret')]"
+                        "ClientSecret" : "[parameters('ClientSecret')]",
+                        "GAMESERVER_VM_IMAGE" : "[parameters('DefaultVMImage')]",
+                        "GAMESERVER_PORTRANGE" : "[parameters('GameServerPortRange')]"
                     }
                  },
                  {

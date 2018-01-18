@@ -14,13 +14,24 @@ namespace AzureGameRoomsScaler
 
     public struct NodeParameters
     {
-        // required
+        #region Required params
+
         public string Region { get; set; }
-        // optional
-        public string Image { get; set; }
-        // required
         public string Size { get; set; }
         public string ResourceGroup { get; set; }
+
+        #endregion
+
+        #region Optional params
+
+        /// <summary>
+        /// Optional param. If ommitted AppSettings["GAMESERVER_VM_IMAGE"] will be used
+        /// </summary>
+        public string Image { get; set; }
+        /// <summary>
+        /// Optional param. If ommitted AppSettings["GAMESERVER_PORT_RANGE"] will be used
+        /// </summary>
+        public string PortRange { get; set; }
     }
     public static class CreateNode
     {
@@ -35,6 +46,27 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Node parameters <region, size> are required"));
             }
 
+            if (string.IsNullOrEmpty(nodeParams.Image) &&
+                string.IsNullOrEmpty(ConfigurationManager.AppSettings["GAMESERVER_VM_IMAGE"]?.ToString()))
+            {
+                return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Image for vm should be specified when deploying"));
+            }
+
+            string vmImage = string.IsNullOrEmpty(nodeParams.Image)
+                                ? nodeParams.Image
+                                : ConfigurationManager.AppSettings["GAMESERVER_VM_IMAGE"].ToString();
+
+            if (string.IsNullOrEmpty(nodeParams.PortRange) &&
+                string.IsNullOrEmpty(ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"]?.ToString()))
+            {
+                return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Port range for game server should be specified when deploying"));
+            }
+
+            string portRange = string.IsNullOrEmpty(nodeParams.PortRange)
+                                ? nodeParams.PortRange
+                                : ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"].ToString();
+
+
             log.Info("Creating VM");
 
             var parameters = JsonConvert.SerializeObject(new Dictionary<string, Dictionary<string, object>> {
@@ -42,8 +74,8 @@ namespace AzureGameRoomsScaler
                     { "virtualMachineSize",  new Dictionary<string, object> { { "value", nodeParams.Size } } },
                     { "adminUserName",   new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_NAME"]?.ToString() ?? "default_gs_admin" } } },
                     { "adminPublicKey", new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["VM_ADMIN_KEY"]?.ToString() ?? System.IO.File.ReadAllText("default_key_rsa.pub") } } },
-                    { "gameServerPortRange", new Dictionary<string, object> { { "value", ConfigurationManager.AppSettings["GAME_SERVER_PORT_RANGE"]?.ToString() ?? "25565" } } },
-                    { "vmImage", new Dictionary<string, object> { { "value" ,nodeParams.Image } } },
+                    { "gameServerPortRange", new Dictionary<string, object> { { "value", portRange } } },
+                    { "vmImage", new Dictionary<string, object> { { "value", vmImage } } },
                 });
 
             var deployment = await AzureMgmtCredentials.instance.Azure.Deployments
