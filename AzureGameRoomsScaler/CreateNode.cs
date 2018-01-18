@@ -32,6 +32,8 @@ namespace AzureGameRoomsScaler
         /// Optional param. If ommitted AppSettings["GAMESERVER_PORT_RANGE"] will be used
         /// </summary>
         public string PortRange { get; set; }
+
+        #endregion
     }
     public static class CreateNode
     {
