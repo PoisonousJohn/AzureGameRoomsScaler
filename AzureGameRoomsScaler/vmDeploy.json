@@ -1,6 +1,6 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
+    "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
             "type": "string"
@@ -19,7 +19,7 @@
             "type": "string",
             "defaultValue": ""
         },
-        "reportGameroomsUrl" : {
+        "reportGameroomsUrl": {
             "type": "string"
         },
         "vmImage": {
@@ -42,22 +42,22 @@
         "publicIpAddressSku": "Basic"
     },
     "resources": [
-            {
-                "type": "Microsoft.Compute/images",
-                "apiVersion": "2016-04-30-preview",
-                "name": "[variables('vmImageName')]",
-                "location": "[parameters('location')]",
-                "properties": {
-                    "storageProfile": {
-                        "osDisk": {
-                            "caching": "ReadWrite",
-                            "osType": "Linux",
-                            "osState": "Generalized",
-                            "blobUri": "[parameters('vmImage')]",
-                            "storageAccountType": "Standard_LRS"
-                        }
+        {
+            "type": "Microsoft.Compute/images",
+            "apiVersion": "2016-04-30-preview",
+            "name": "[variables('vmImageName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "storageProfile": {
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "osType": "Linux",
+                        "osState": "Generalized",
+                        "blobUri": "[parameters('vmImage')]",
+                        "storageAccountType": "Standard_LRS"
                     }
                 }
+            }
         },
         {
             "name": "[variables('virtualMachineName')]",
@@ -106,7 +106,32 @@
                         }
                     ]
                 }
-            }
+            },
+            "resources": [
+                {
+                    "name": "fillEnvVarWithFuncHost",
+                    "type": "extensions",
+                    "location": "[parameters('location')]",
+                    "apiVersion": "2017-03-30",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/registerEnvVar.sh"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\"')]"
+                        }
+                    }
+                }
+            ]
         },
         {
             "name": "[variables('virtualNetworkName')]",
@@ -206,32 +231,7 @@
                     }
                 ]
             }
-        },
-        {
-            "name": "fillEnvVarWithFuncHost",
-            "type": "extensions",
-            "location": "[parameters('location')]",
-            "apiVersion": "2015-06-15",
-            "dependsOn": [
-              "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
-            ],
-            "properties": {
-              "publisher": "Microsoft.Azure.Extensions",
-              "type": "CustomScript",
-              "typeHandlerVersion": "2.0",
-              "autoUpgradeMinorVersion": true,
-              "settings": {
-                "fileUris": [
-                  "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/registerEnvVar.sh"
-                ]
-              },
-              "protectedSettings": {
-                "commandToExecute": "[concat('sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\"')]"
-              }
-            }
-          }
+        }
     ],
-    "outputs": {
-
-    }
+    "outputs": {}
 }
