@@ -1,0 +1,56 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"funcname": {
+			"type": "string"
+		},
+		"clientId": {
+			"type": "securestring"
+		},
+		"clientSecret": {
+			"type": "securestring"
+		},
+		"storageName": {
+			"type": "string"
+		},
+		"gameServerPortRange": {
+			"type": "string"
+		},
+		"defaultVMImage": {
+			"type": "string"
+		}
+	},
+	"resources": [
+		{
+            "apiVersion": "2016-03-01",
+            "name": "[parameters('funcname')]",
+            "type": "Microsoft.Web/Sites",
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "appsettings",
+                    "type": "config",
+                    "dependsOn": [
+                      "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites', parameters('funcname'))]",
+                      "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites/sourcecontrols', parameters('funcname'), 'web')]"
+                    ],
+                    "properties": {
+						"AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
+						"AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
+						"FUNCTIONS_EXTENSION_VERSION": "~1",
+						"WEBSITE_NODE_DEFAULT_VERSION": "6.5.0",
+						"SubscriptionId": "[subscription().id]",
+						"Tenant": "[subscription().tenantId]",
+						"ClientId": "[parameters('clientId')]",
+						"ClientSecret": "[parameters('clientSecret')]",
+						"GAMESERVER_VM_IMAGE": "[parameters('defaultVMImage')]",
+						"REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]",
+						"GAMESERVER_PORT_RANGE": "[parameters('gameServerPortRange')]"
+                    }
+                 }
+            ],
+            "kind": "functionapp"
+        }
+	]
+}
