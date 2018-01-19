@@ -8,22 +8,7 @@
 		"funcname": {
 			"type": "string"
 		},
-		"clientId": {
-			"type": "securestring"
-		},
-		"clientSecret": {
-			"type": "securestring"
-		},
-		"storageName": {
-			"type": "string"
-		},
-		"gameServerPortRange": {
-			"type": "string"
-		},
 		"hostingPlanName": {
-			"type": "string"
-		},
-		"defaultVMImage": {
 			"type": "string"
 		}
 	},
@@ -50,17 +35,8 @@
                       "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites', parameters('funcname'))]"
                     ],
                     "properties": {
-						"AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
-						"AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
-						"FUNCTIONS_EXTENSION_VERSION": "~1",
-						"WEBSITE_NODE_DEFAULT_VERSION": "6.5.0",
-						"SubscriptionId": "[subscription().id]",
-						"Tenant": "[subscription().tenantId]",
-						"ClientId": "[parameters('clientId')]",
-						"ClientSecret": "[parameters('clientSecret')]",
-						"GAMESERVER_VM_IMAGE": "[parameters('defaultVMImage')]",
-						"REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]",
-						"GAMESERVER_PORT_RANGE": "[parameters('gameServerPortRange')]"
+						"REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]"
+
                     }
                  }
 			],
