@@ -1,27 +1,54 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-		"location" : {
-			"type": "string"
-		},
-		"funcname": {
-			"type": "string"
-		},
-		"hostingPlanName": {
-			"type": "string"
-		}
-	},
-	"resources": [
-		{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "funcname": {
+            "type": "string"
+        },
+        "storageName": {
+            "type": "string"
+        },
+        "ClientId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Service Principal Id which can be used by functions to create VMs"
+            }
+        },
+        "ClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Service Principal Secret which can be used by functions to create VMs"
+            }
+        },
+        "DefaultVMImage": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If you want server VMs to be deployed with default image, specify it in this parameter. You can override it during deployment of specific VM"
+            }
+        },
+        "GameServerPortRange": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If your game server needs specific port range by default, specify it here. You can override this during deployment of specific VM"
+            }
+        },
+        "hostingPlanName": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
             "apiVersion": "2016-03-01",
             "name": "[parameters('funcname')]",
             "type": "Microsoft.Web/Sites",
             "properties": {
                 "name": "[parameters('funcname')]",
-                "siteConfig": {
-
-                },
+                "siteConfig": {},
                 "clientAffinityEnabled": false,
                 "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
                 "hostingEnvironment": ""
@@ -32,16 +59,25 @@
                     "name": "appsettings",
                     "type": "config",
                     "dependsOn": [
-                      "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites', parameters('funcname'))]"
+                        "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites', parameters('funcname'))]"
                     ],
                     "properties": {
-						"REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]"
-
+                        "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
+                        "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
+                        "FUNCTIONS_EXTENSION_VERSION": "~1",
+                        "WEBSITE_NODE_DEFAULT_VERSION": "6.5.0",
+                        "SubscriptionId": "[subscription().subscriptionId]",
+                        "Tenant": "[subscription().tenantId]",
+                        "ClientId": "[parameters('ClientId')]",
+                        "ClientSecret": "[parameters('ClientSecret')]",
+                        "GAMESERVER_VM_IMAGE": "[parameters('DefaultVMImage')]",
+                        "GAMESERVER_PORT_RANGE": "[parameters('GameServerPortRange')]",
+                        "REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]"
                     }
-                 }
-			],
-			"location": "[parameters('location')]",
+                }
+            ],
+            "location": "[parameters('location')]",
             "kind": "functionapp"
         }
-	]
+    ]
 }

@@ -21,32 +21,6 @@
         "location": {
             "type": "string"
         },
-        "ClientId": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Service Principal Id which can be used by functions to create VMs"
-            }
-        },
-        "ClientSecret": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Service Principal Secret which can be used by functions to create VMs"
-            }
-        },
-        "DefaultVMImage": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "If you want server VMs to be deployed with default image, specify it in this parameter. You can override it during deployment of specific VM"
-            }
-        },
-        "GameServerPortRange": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "If your game server needs specific port range by default, specify it here. You can override this during deployment of specific VM"
-            }
-        },
         "FuncsGitRepo": {
             "type": "string",
             "defaultValue": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
@@ -68,20 +42,7 @@
 			"type": "Microsoft.Web/Sites",
 			"properties": {
 				"name": "[parameters('name')]",
-				"siteConfig": {
-					"appSettings" : [
-						{ "name": "AzureWebJobsDashboard", "value" : "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]" },
-						{ "name": "AzureWebJobsStorage", "value" : "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]" },
-						{ "name": "FUNCTIONS_EXTENSION_VERSION", "value" : "~1" },
-						{ "name": "WEBSITE_NODE_DEFAULT_VERSION", "value" : "6.5.0" },
-						{ "name": "SubscriptionId", "value" : "[variables('subscriptionId')]" },
-						{ "name": "Tenant", "value" : "[variables('tenant')]" },
-						{ "name": "ClientId", "value" : "[parameters('ClientId')]" },
-						{ "name": "ClientSecret", "value" : "[parameters('ClientSecret')]" },
-						{ "name": "GAMESERVER_VM_IMAGE", "value" : "[parameters('DefaultVMImage')]" },
-
-					]
-				},
+				"siteConfig": {},
 				"clientAffinityEnabled": false,
 				"serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
 				"hostingEnvironment": ""
