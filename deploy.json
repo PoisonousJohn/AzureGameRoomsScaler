@@ -1,13 +1,7 @@
 {
     "variables": {
-        "storageName" : "[concat(uniqueString(parameters('name'), 'storage'))]",
-        "hostingPlanName": "[concat(toLower(parameters('name')), 'freeplan')]",
-        "serverFarmResourceGroup" : "[resourceGroup().id]",
-        "workerSize" : "0",
-        "subscriptionId": "[subscription().subscriptionId]",
-        "tenant": "[subscription().tenantId]",
-        "sku": "Free",
-        "skuCode": "F1"
+        "storageName": "[concat(uniqueString(parameters('name')), 'storage')]",
+        "hostingPlanName": "[concat(toLower(parameters('name')), 'freeplan')]"
     },
     "parameters": {
         "name": {
@@ -25,117 +19,93 @@
                 "description": "Service Principal Id which can be used by functions to create VMs"
             }
         },
-        "ClientSecret" : {
+        "ClientSecret": {
             "type": "securestring",
             "metadata": {
                 "description": "Service Principal Secret which can be used by functions to create VMs"
             }
         },
-        "DefaultVMImage" : {
+        "DefaultVMImage": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
                 "description": "If you want server VMs to be deployed with default image, specify it in this parameter. You can override it during deployment of specific VM"
             }
         },
-        "GameServerPortRange" : {
+        "GameServerPortRange": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
                 "description": "If your game server needs specific port range by default, specify it here. You can override this during deployment of specific VM"
             }
         },
-        "FuncsGitRepo" : {
+        "FuncsGitRepo": {
             "type": "string",
             "defaultValue": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
         }
     },
     "resources": [
         {
-            "apiVersion": "2016-03-01",
-            "name": "[parameters('name')]",
-            "type": "Microsoft.Web/Sites",
-            "properties": {
-                "name": "[parameters('name')]",
-                "siteConfig": {
-
-                },
-                "clientAffinityEnabled": false,
-                "serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-                "hostingEnvironment": ""
-            },
-            "resources": [
-                {
-                    "apiVersion": "2015-08-01",
-                    "name": "appsettings",
-                    "type": "config",
-                    "dependsOn": [
-                      "[resourceId('Microsoft.Web/Sites', parameters('name'))]",
-                      "[resourceId('Microsoft.Web/Sites/sourcecontrols', parameters('name'), 'web')]",
-                      "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
-                    ],
-                    "properties": {
-                        "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]",
-                        "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]",
-                        "FUNCTIONS_EXTENSION_VERSION": "~1",
-                        "WEBSITE_NODE_DEFAULT_VERSION": "6.5.0",
-                        "SubscriptionId" : "[variables('subscriptionId')]",
-                        "Tenant" : "[variables('tenant')]",
-                        "ClientId" : "[parameters('ClientId')]",
-                        "ClientSecret" : "[parameters('ClientSecret')]",
-                        "GAMESERVER_VM_IMAGE" : "[parameters('DefaultVMImage')]",
-                        "REPORT_GAMEROOMS_URL" : "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('name'), 'ReportGameRooms'),'2015-08-01').trigger_url]",
-                        "GAMESERVER_PORT_RANGE" : "[parameters('GameServerPortRange')]"
-                    }
-                 },
-                 {
-                      "apiVersion": "2015-08-01",
-                      "name": "web",
-                      "type": "sourcecontrols",
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Web/Sites/', parameters('name'))]"
-                      ],
-                      "properties": {
-                        "RepoUrl": "[parameters('FuncsGitRepo')]",
-                        "branch": "master",
-                        "IsManualIntegration": "true"
-                      }
-                 }
-            ],
-            "dependsOn": [
-                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
-            ],
-            "location": "[parameters('location')]",
-            "tags": {
-                "[concat('hidden-related:', '/subscriptions/', variables('subscriptionId'),'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty"
-            },
-            "kind": "functionapp"
-        },
-        {
+            "name": "MainResources",
+            "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-09-01",
-            "name": "[variables('hostingPlanName')]",
-            "type": "Microsoft.Web/serverfarms",
-            "location": "[parameters('location')]",
             "properties": {
-                "name": "[variables('hostingPlanName')]",
-                "workerSizeId": "[variables('workerSize')]",
-                "reserved": false,
-                "numberOfWorkers": "1",
-                "hostingEnvironment": ""
-            },
-            "sku": {
-                "Tier": "[variables('sku')]",
-                "Name": "[variables('skuCode')]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-funcapp.json"
+                },
+                "parameters": {
+                    "storageName": {
+                        "value": "[variables('storageName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "name":  {
+                        "value": "[parameters('name')]"
+                    },
+                    "FuncsGitRepo":  {
+                        "value": "[parameters('FuncsGitRepo')]"
+                    }
+                }
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('storageName')]",
-            "location": "[parameters('location')]",
+            "name": "SiteSettings",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": ["[resourceId('Microsoft.Resources/deployments', 'MainResources')]"],
             "properties": {
-                "accountType": "Standard_LRS"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/func-app-config.json"
+                },
+                "parameters": {
+                    "storageName": {
+                        "value": "[variables('storageName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "ClientId":  {
+                        "value": "[parameters('ClientId')]"
+                    },
+                    "ClientSecret":  {
+                        "value": "[parameters('ClientSecret')]"
+                    },
+                    "DefaultVMImage":  {
+                        "value": "[parameters('DefaultVMImage')]"
+                    },
+                    "GameServerPortRange":  {
+                        "value": "[parameters('GameServerPortRange')]"
+                    },
+                    "funcname":  {
+                        "value": "[parameters('name')]"
+                    },
+                    "hostingPlanName":  {
+                        "value": "[variables('hostingPlanName')]"
+                    }
+                }
             }
         }
     ],
