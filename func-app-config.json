@@ -2,6 +2,9 @@
 	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
+		"location" : {
+			"type": "string"
+		},
 		"funcname": {
 			"type": "string"
 		},
@@ -17,6 +20,9 @@
 		"gameServerPortRange": {
 			"type": "string"
 		},
+		"hostingPlanName": {
+			"type": "string"
+		},
 		"defaultVMImage": {
 			"type": "string"
 		}
@@ -26,14 +32,22 @@
             "apiVersion": "2016-03-01",
             "name": "[parameters('funcname')]",
             "type": "Microsoft.Web/Sites",
+            "properties": {
+                "name": "[parameters('funcname')]",
+                "siteConfig": {
+
+                },
+                "clientAffinityEnabled": false,
+                "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                "hostingEnvironment": ""
+            },
             "resources": [
                 {
                     "apiVersion": "2015-08-01",
                     "name": "appsettings",
                     "type": "config",
                     "dependsOn": [
-                      "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites', parameters('funcname'))]",
-                      "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites/sourcecontrols', parameters('funcname'), 'web')]"
+                      "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/Sites', parameters('funcname'))]"
                     ],
                     "properties": {
 						"AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2015-05-01-preview').key1)]",
@@ -49,7 +63,8 @@
 						"GAMESERVER_PORT_RANGE": "[parameters('gameServerPortRange')]"
                     }
                  }
-            ],
+			],
+			"location": "[parameters('location')]",
             "kind": "functionapp"
         }
 	]
