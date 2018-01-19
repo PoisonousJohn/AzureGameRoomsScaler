@@ -68,34 +68,25 @@
 			"type": "Microsoft.Web/Sites",
 			"properties": {
 				"name": "[parameters('name')]",
-				"siteConfig": {},
+				"siteConfig": {
+					"appSettings" : [
+						{ "name": "AzureWebJobsDashboard", "value" : "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]" },
+						{ "name": "AzureWebJobsStorage", "value" : "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]" },
+						{ "name": "FUNCTIONS_EXTENSION_VERSION", "value" : "~1" },
+						{ "name": "WEBSITE_NODE_DEFAULT_VERSION", "value" : "6.5.0" },
+						{ "name": "SubscriptionId", "value" : "[variables('subscriptionId')]" },
+						{ "name": "Tenant", "value" : "[variables('tenant')]" },
+						{ "name": "ClientId", "value" : "[parameters('ClientId')]" },
+						{ "name": "ClientSecret", "value" : "[parameters('ClientSecret')]" },
+						{ "name": "GAMESERVER_VM_IMAGE", "value" : "[parameters('DefaultVMImage')]" },
+
+					]
+				},
 				"clientAffinityEnabled": false,
 				"serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
 				"hostingEnvironment": ""
 			},
 			"resources": [
-				{
-					"apiVersion": "2015-08-01",
-					"name": "appsettings",
-					"type": "config",
-					"dependsOn": [
-						"[resourceId('Microsoft.Web/Sites', parameters('name'))]",
-						"[resourceId('Microsoft.Web/Sites/sourcecontrols', parameters('name'), 'web')]",
-						"[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
-					],
-					"properties": {
-						"AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]",
-						"AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-05-01-preview').key1)]",
-						"FUNCTIONS_EXTENSION_VERSION": "~1",
-						"WEBSITE_NODE_DEFAULT_VERSION": "6.5.0",
-						"SubscriptionId": "[variables('subscriptionId')]",
-						"Tenant": "[variables('tenant')]",
-						"ClientId": "[parameters('ClientId')]",
-						"ClientSecret": "[parameters('ClientSecret')]",
-						"GAMESERVER_VM_IMAGE": "[parameters('DefaultVMImage')]",
-						"GAMESERVER_PORT_RANGE": "[parameters('GameServerPortRange')]"
-					}
-				},
 				{
 					"apiVersion": "2015-08-01",
 					"name": "web",
