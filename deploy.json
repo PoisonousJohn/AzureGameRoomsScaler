@@ -77,11 +77,11 @@
                     "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-funcapp.json"
                 },
                 "parameters": {
-                    "vmDetailsStorageName": {
-                        "value": "[variables('vmDetailsStorageName')]"
-                    },
                     "storageName": {
                         "value": "[variables('storageName')]"
+                    },
+                    "vmDetailsStorageName": {
+                        "value": "[variables('vmDetailsStorageName')]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
@@ -108,6 +108,9 @@
                 "parameters": {
                     "storageName": {
                         "value": "[variables('storageName')]"
+                    },
+                    "vmDetailsStorageName": {
+                        "value": "[variables('vmDetailsStorageName')]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
