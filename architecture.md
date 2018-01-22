@@ -2,7 +2,7 @@
  
 ## This document contains information about the overall architecture of the project plus some FAQ.
 
-The application heavily relies on an external service (probably the matchmaking service). This service will have the responsibility to call the described operations. Moreover, the application should have a storage mechanism (Table Storage?) to store information about running VMs. This should contain:
+The application heavily relies on an external service (probably the matchmaking service). This service will have the responsibility to call the described operations. Moreover, the application should have a storage mechanism (Table Storage) to store information about running VMs. This should contain:
 
 - VM unique ID (maybe its full ARM ID)
 - VM state
@@ -12,7 +12,7 @@ The application heavily relies on an external service (probably the matchmaking 
 VM state should have one of the following values
 - Creating
 - Running
-- MarkedForDeletion
+- MarkedForDeallocation
 - Deallocated
 
 The API Function should have the following operations
@@ -26,6 +26,12 @@ Else, this operation should use ARM API to create a new VM. The VM will be marke
 - *DeallocateVM(VM_ID)*. This will deallocate the VM via Azure ARM API and the associated line from the storage.
 - *MarkVMForDeallocation(VM_ID)*. This will mark the VM as MarkedForDeallocation in the storage.
 - *GetAvailableVMs*. This operation will return details about all VMs that are in the Running state.
+
+Since most queries will target VM_ID and some will target VM_State, the Table Storage schema consists of
+
+- PartitionKey: VM_ID
+- Row_Key: VM_State
+- Other properties TBD
 
 ## FAQ 
 
