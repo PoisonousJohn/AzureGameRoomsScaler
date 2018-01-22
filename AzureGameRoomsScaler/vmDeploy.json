@@ -122,12 +122,7 @@
                         "typeHandlerVersion": "2.0",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "fileUris": [
-                                "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/registerEnvVar.sh"
-                            ]
-                        },
-                        "protectedSettings": {
-                            "commandToExecute": "[concat('sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\"')]"
+                            "commandToExecute": "[concat('echo \"export REPORT_ROOMS_URL=\\\"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\\\" >> /etc/profile && echo \"nameserver 168.63.129.16\" >> /etc/resolv.conf')]"
                         }
                     }
                 }
