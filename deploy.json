@@ -7,11 +7,15 @@
         "name": {
             "type": "string",
             "metadata": {
-                "description": "It's your Azure Functions domain name"
+                "description": "It's your Azure Functions domain name. Make sure it is unique"
             }
         },
         "location": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "North Europe",
+            "metadata": {
+                "description": "The Azure datacenter location where your resources will be deployed"
+            }
         },
         "ClientId": {
             "type": "securestring",
