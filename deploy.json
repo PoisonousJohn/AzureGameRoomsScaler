@@ -140,9 +140,6 @@
                     "funcname":  {
                         "value": "[parameters('name')]"
                     },
-                    "hostingPlanName":  {
-                        "value": "[variables('hostingPlanName')]"
-                    },
                     "activityLogAlertName": {
                         "value": "[parameters('activityLogAlertName')]"
                     },
