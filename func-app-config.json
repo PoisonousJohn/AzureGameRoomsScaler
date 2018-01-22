@@ -72,7 +72,8 @@
                         "ClientSecret": "[parameters('ClientSecret')]",
                         "GAMESERVER_VM_IMAGE": "[parameters('DefaultVMImage')]",
                         "GAMESERVER_PORT_RANGE": "[parameters('GameServerPortRange')]",
-                        "REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]"
+                        "REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]",
+                        "APPINSIGHTS_INSTRUMENTATIONKEY":"[reference(resourceId('microsoft.insights/components/', parameters('funcname')), '2015-05-01').InstrumentationKey]"
                     }
                 }
             ],

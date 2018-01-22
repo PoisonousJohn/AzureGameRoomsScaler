@@ -7,11 +7,15 @@
         "name": {
             "type": "string",
             "metadata": {
-                "description": "It's your Azure Functions domain name"
+                "description": "It's your Azure Functions domain name. Make sure it is unique"
             }
         },
         "location": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "North Europe",
+            "metadata": {
+                "description": "The Azure datacenter location where your resources will be deployed"
+            }
         },
         "ClientId": {
             "type": "securestring",
@@ -42,6 +46,24 @@
         "FuncsGitRepo": {
             "type": "string",
             "defaultValue": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
+        },
+        "activityLogAlertName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Activity log alert."
+            }
+        },
+        "actionGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique name (within the Resource Group) for the Action group for the Activity Log alert."
+            }
+        },
+        "actionGroupShortName": {
+            "type": "string",
+            "metadata": {
+                "description": "Short name (maximum 12 characters) for the Action group for the Activity Log alert."
+            }
         }
     },
     "resources": [
@@ -104,6 +126,32 @@
                     },
                     "hostingPlanName":  {
                         "value": "[variables('hostingPlanName')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "VMMonitor",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": ["[resourceId('Microsoft.Resources/deployments', 'MainResources')]"],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-activitylog-alert.json"
+                },
+                "parameters": {
+                    "funcname":  {
+                        "value": "[parameters('name')]"
+                    },
+                    "activityLogAlertName": {
+                        "value": "[parameters('activityLogAlertName')]"
+                    },
+                    "actionGroupName": {
+                        "value": "[parameters('actionGroupName')]"
+                    },
+                    "actionGroupShortName": {
+                        "value": "[parameters('actionGroupShortName')]"
                     }
                 }
             }

@@ -15,7 +15,7 @@ namespace AzureGameRoomsScaler
 	public static class VMMonitor
 	{
 		[FunctionName("VMMonitor")]
-		public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "report/vmstate")]HttpRequestMessage req, TraceWriter log)
+		public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "VMMonitor")]HttpRequestMessage req, TraceWriter log)
 		{
 			// Get request body
 			dynamic dataobject = await req.Content.ReadAsAsync<object>();
