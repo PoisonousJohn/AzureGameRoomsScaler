@@ -26,7 +26,7 @@
                 "enabled": true,
                 "webhookReceivers": [{
                     "name": "functionHook",
-                    "serviceUri": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'VMmonitor'),'2015-08-01').trigger_url]"
+                    "serviceUri": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'report/vmstate'),'2015-08-01').trigger_url]"
                 }]
             }
         },
