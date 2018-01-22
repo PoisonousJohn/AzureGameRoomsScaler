@@ -1,7 +1,7 @@
 {
     "variables": {
         "storageName": "[concat(uniqueString(parameters('name')), 'storage')]",
-        "vmDetailsStorageName": "[concat(uniqueString(parameters('name')), 'vmDetailsStorage')]",
+        "vmDetailsStorageName": "[concat(uniqueString(parameters('name')), 'vmdetails')]",
         "hostingPlanName": "[concat(toLower(parameters('name')), 'freeplan')]"
     },
     "parameters": {
