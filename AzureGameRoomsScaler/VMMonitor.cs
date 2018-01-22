@@ -14,15 +14,19 @@ namespace AzureGameRoomsScaler
 
     public static class VMMonitor
     {
+
+		public static string VMMONITOR_VERBOSE = "VMMONITOR_VERBOSE";
+
         [FunctionName("VMMonitor")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "VMMonitor")]HttpRequestMessage req, TraceWriter log)
         {
             // Get request body
             dynamic dataobject = await req.Content.ReadAsAsync<object>();
             //log.Info(dataobject.ToString());
-            log.Info("----------------------------------------------");
+            
+			if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
             var activityLog = dataobject.data.context.activityLog;
-            log.Info(activityLog.ToString());
+            if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info(activityLog.ToString());
 
             //confirm that this is indeed a VM operation
             if (activityLog.operationName.ToString().StartsWith("Microsoft.Compute/virtualMachines/"))
@@ -44,11 +48,19 @@ namespace AzureGameRoomsScaler
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
                 {
-                    log.Info($"VM with name {vmName} started");
+                    log.Info($"VM with name {vmName} started - was deallocated");
                 }
             }
-            log.Info("----------------------------------------------");
-            return req.CreateResponse(HttpStatusCode.OK, "WebHook call successful");
+			else
+			{
+				string msg = "No VM operation, something went wrong";
+				log.Error(msg);
+				return req.CreateErrorResponse(HttpStatusCode.InternalServerError, msg);
+			}
+            
+			if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
+            
+			return req.CreateResponse(HttpStatusCode.OK, "WebHook call successful");
         }
     }
 }
