@@ -7,14 +7,14 @@
         "name": {
             "type": "string",
             "metadata": {
-                "description": "It's your Azure Functions domain name. Make sure it is unique"
+                "description": "It's your Azure Function's domain name. Make sure it is unique, as this will determine Function's DNS"
             }
         },
         "location": {
             "type": "string",
             "defaultValue": "North Europe",
             "metadata": {
-                "description": "The Azure datacenter location where your resources will be deployed"
+                "description": "The Azure datacenter's location where your resources will be deployed"
             }
         },
         "ClientId": {
@@ -50,19 +50,19 @@
         "activityLogAlertName": {
             "type": "string",
             "metadata": {
-                "description": "Unique name (within the Resource Group) for the Activity log alert."
+                "description": "Unique name (within the Resource Group) for the Activity log alert - used by VMMonitor Function"
             }
         },
         "actionGroupName": {
             "type": "string",
             "metadata": {
-                "description": "Unique name (within the Resource Group) for the Action group for the Activity Log alert."
+                "description": "Unique name (within the Resource Group) for the Action group for the Activity Log alert - used by VMMonitor Function"
             }
         },
         "actionGroupShortName": {
             "type": "string",
             "metadata": {
-                "description": "Short name (maximum 12 characters) for the Action group for the Activity Log alert."
+                "description": "Short name (maximum 12 characters) for the Action group for the Activity Log alert - used by VMMonitor Function"
             }
         }
     },
