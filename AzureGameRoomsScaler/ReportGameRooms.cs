@@ -26,7 +26,8 @@ namespace AzureGameRoomsScaler
         [FunctionName("ReportGameRooms")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "report/gamerooms")]HttpRequestMessage req, TraceWriter log)
         {
-            var nodes = JsonConvert.DeserializeObject<Request>(await req.Content.ReadAsStringAsync());
+            var payload = await req.Content.ReadAsStringAsync();
+            var nodes = JsonConvert.DeserializeObject<Request>(payload);
             if (nodes.nodes == null || nodes.nodes.Length == 0)
             {
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, "Nodes payload not found.");
@@ -37,7 +38,9 @@ namespace AzureGameRoomsScaler
                 log.Info($"Reported {node.nodeId} has {node.rooms} rooms");
             }
 
-            return req.CreateResponse(HttpStatusCode.OK);
+            var resp = req.CreateResponse(HttpStatusCode.OK);
+            resp.Content = new StringContent(payload);
+            return resp;
         }
     }
 }
