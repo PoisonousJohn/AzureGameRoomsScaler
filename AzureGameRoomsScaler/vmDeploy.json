@@ -123,7 +123,7 @@
                         "autoUpgradeMinorVersion": true,
                         "settings": {
                             "timestamp" : 5,
-                            "commandToExecute": "[concat('echo \"echo \\\"export \\$1=\\\\\\\"\\$2\\\\\\\"\\\" >> /etc/profile\" >> registerEnvVar.sh && sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\" && echo \"nameserver 168.63.129.16\" >> /etc/resolv.conf')]"
+                            "commandToExecute": "[concat('echo \"echo \\\"export \\$1=\\\\\\\"\\$2\\\\\\\"\\\" >> /etc/profile >> /etc/bash.bashrc\" >> registerEnvVar.sh && sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\" && echo \"nameserver 168.63.129.16\" >> /etc/resolv.conf')]"
                         }
                     }
                 }
