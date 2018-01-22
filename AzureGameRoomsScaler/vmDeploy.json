@@ -122,7 +122,7 @@
                         "typeHandlerVersion": "2.0",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "commandToExecute": "[concat('echo \"export REPORT_ROOMS_URL=\\\"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\\\" >> /etc/profile && echo \"nameserver 168.63.129.16\" >> /etc/resolv.conf')]"
+                            "commandToExecute": "[concat('echo \"export $1=$2\" >> registerEnvVar.sh && sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\" && echo \"nameserver 168.63.129.16\" >> /etc/resolv.conf')]"
                         }
                     }
                 }
