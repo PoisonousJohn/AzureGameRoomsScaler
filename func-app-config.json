@@ -11,6 +11,9 @@
         "storageName": {
             "type": "string"
         },
+        "vmDetailsStorageName":{
+            "type": "string"
+        },
         "ClientId": {
             "type": "securestring",
             "metadata": {
@@ -73,7 +76,8 @@
                         "GAMESERVER_VM_IMAGE": "[parameters('DefaultVMImage')]",
                         "GAMESERVER_PORT_RANGE": "[parameters('GameServerPortRange')]",
                         "REPORT_GAMEROOMS_URL": "[listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcname'), 'ReportGameRooms'),'2015-08-01').trigger_url]",
-                        "APPINSIGHTS_INSTRUMENTATIONKEY":"[reference(resourceId('microsoft.insights/components/', parameters('funcname')), '2015-05-01').InstrumentationKey]"
+                        "APPINSIGHTS_INSTRUMENTATIONKEY":"[reference(resourceId('microsoft.insights/components/', parameters('funcname')), '2015-05-01').InstrumentationKey]",
+                        "VMDETAILSSTORAGE": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('vmDetailsStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('vmDetailsStorageName')), '2015-05-01-preview').key1)]"
                     }
                 }
             ],

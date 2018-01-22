@@ -1,6 +1,7 @@
 {
     "variables": {
         "storageName": "[concat(uniqueString(parameters('name')), 'storage')]",
+        "vmDetailsStorageName": "[concat(uniqueString(parameters('name')), 'vmDetailsStorage')]",
         "hostingPlanName": "[concat(toLower(parameters('name')), 'freeplan')]"
     },
     "parameters": {
@@ -66,8 +67,7 @@
             }
         }
     },
-    "resources": [
-        {
+    "resources": [{
             "name": "MainResources",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-09-01",
@@ -77,16 +77,19 @@
                     "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-funcapp.json"
                 },
                 "parameters": {
+                    "vmDetailsStorageName": {
+                        "value": "[variables('vmDetailsStorageName')]"
+                    },
                     "storageName": {
                         "value": "[variables('storageName')]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
                     },
-                    "name":  {
+                    "name": {
                         "value": "[parameters('name')]"
                     },
-                    "FuncsGitRepo":  {
+                    "FuncsGitRepo": {
                         "value": "[parameters('FuncsGitRepo')]"
                     }
                 }
@@ -109,22 +112,22 @@
                     "location": {
                         "value": "[parameters('location')]"
                     },
-                    "ClientId":  {
+                    "ClientId": {
                         "value": "[parameters('ClientId')]"
                     },
-                    "ClientSecret":  {
+                    "ClientSecret": {
                         "value": "[parameters('ClientSecret')]"
                     },
-                    "DefaultVMImage":  {
+                    "DefaultVMImage": {
                         "value": "[parameters('DefaultVMImage')]"
                     },
-                    "GameServerPortRange":  {
+                    "GameServerPortRange": {
                         "value": "[parameters('GameServerPortRange')]"
                     },
-                    "funcname":  {
+                    "funcname": {
                         "value": "[parameters('name')]"
                     },
-                    "hostingPlanName":  {
+                    "hostingPlanName": {
                         "value": "[variables('hostingPlanName')]"
                     }
                 }
@@ -141,7 +144,7 @@
                     "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-activitylog-alert.json"
                 },
                 "parameters": {
-                    "funcname":  {
+                    "funcname": {
                         "value": "[parameters('name')]"
                     },
                     "activityLogAlertName": {

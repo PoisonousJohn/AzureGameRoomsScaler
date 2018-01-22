@@ -48,7 +48,7 @@ namespace AzureGameRoomsScaler
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
                 {
-                    log.Info($"VM with name {vmName} started - was deallocated");
+                    log.Info($"VM with name {vmName} started - was deallocated before");
                 }
             }
 			else

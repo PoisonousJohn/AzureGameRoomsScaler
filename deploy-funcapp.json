@@ -18,7 +18,10 @@
         },
         "storageName": {
             "type": "string"
-        },
+		},
+		"vmDetailsStorageName":{
+			"type": "string"
+		},
         "location": {
             "type": "string"
         },
@@ -41,6 +44,15 @@
 			"apiVersion": "2015-05-01-preview",
 			"type": "Microsoft.Storage/storageAccounts",
 			"name": "[parameters('storageName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"accountType": "Standard_LRS"
+			}
+		},
+		{
+			"apiVersion": "2015-05-01-preview",
+			"type": "Microsoft.Storage/storageAccounts",
+			"name": "[parameters('vmDetailsStorageName')]",
 			"location": "[parameters('location')]",
 			"properties": {
 				"accountType": "Standard_LRS"
@@ -74,7 +86,8 @@
 			],
 			"dependsOn": [
 				"[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-				"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]"
+				"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', parameters('vmDetailsStorageName'))]"
 			],
 			"location": "[parameters('location')]",
 			"tags": {
