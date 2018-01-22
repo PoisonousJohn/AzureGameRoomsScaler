@@ -23,27 +23,32 @@ namespace AzureGameRoomsScaler
             log.Info("----------------------------------------------");
             var activityLog = dataobject.data.context.activityLog;
             log.Info(activityLog.ToString());
-            if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write")
+
+            //confirm that this is indeed a VM operation
+            if (activityLog.operationName.ToString().StartsWith("Microsoft.Compute/virtualMachines/"))
             {
-                if (activityLog.subStatus == "")
-                    log.Info("VM creating");
-                else if (activityLog.subStatus == "Created")
-                    log.Info("VM created");
-            }
-            else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/restart/action" && activityLog.status == "Succeeded")
-            {
-                log.Info("VM rebooted");
-            }
-            else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/deallocate/action" && activityLog.status == "Succeeded")
-            {
-                log.Info("VM deallocated");
-            }
-            else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
-            {
-                log.Info("VM started");
+				//get the VM name
+				string resourceId = activityLog.resourceId.ToString(); // /subscriptions/6bd0e514-c783-4dac-92d2-6788744eee7a/resourceGroups/lala3/providers/Microsoft.Compute/virtualMachines/lala3
+				string vmName = resourceId.Substring(resourceId.LastIndexOf('/') + 1);
+                if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Succeeded")
+                {
+                    log.Info($"VM with name {vmName} created");
+                }
+                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/restart/action" && activityLog.status == "Succeeded")
+                {
+                    log.Info($"VM with name {vmName} rebooted");
+                }
+                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/deallocate/action" && activityLog.status == "Succeeded")
+                {
+                    log.Info($"VM with name {vmName} deallocated");
+                }
+                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
+                {
+                    log.Info($"VM with name {vmName} started");
+                }
             }
             log.Info("----------------------------------------------");
-            return req.CreateResponse(HttpStatusCode.OK, "Hello");
+            return req.CreateResponse(HttpStatusCode.OK, "WebHook call successful");
         }
     }
 }
