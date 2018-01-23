@@ -15,7 +15,8 @@ namespace AzureGameRoomsScaler
     public static class VMMonitor
     {
 
-		public static string VMMONITOR_VERBOSE = "VMMONITOR_VERBOSE";
+		private static string VMMONITOR_VERBOSE = "VMMONITOR_VERBOSE";
+        private static string VM_NOT_FOUND_MESSAGE = "VM NOT FOUND: ";
 
         [FunctionName("VMMonitor")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "VMMonitor")]HttpRequestMessage req, TraceWriter log)
@@ -25,6 +26,7 @@ namespace AzureGameRoomsScaler
             //log.Info(dataobject.ToString());
             
 			if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
+            //get Azure Monitor detailed activity log
             var activityLog = dataobject.data.context.activityLog;
             if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info(activityLog.ToString());
 
@@ -42,34 +44,37 @@ namespace AzureGameRoomsScaler
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} created");
-                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running);
+                    if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running)== VMDetailsUpdateResult.VMNotFound)
+                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/restart/action" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} rebooted");
-                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running);
+                    if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running)== VMDetailsUpdateResult.VMNotFound)
+                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/deallocate/action" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} deallocated");
-                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Deallocated);
+                    if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Deallocated) == VMDetailsUpdateResult.VMNotFound)
+                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} started - was deallocated before");
-                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running);
+                    if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running) == VMDetailsUpdateResult.VMNotFound)
+                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
+
+                if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
+                return req.CreateResponse(HttpStatusCode.OK, $"WebHook call for VM:'{vmName}' with operation:'{activityLog.operationName}' and status:'{activityLog.status}' was successful");
             }
 			else
 			{
 				string msg = "No VM operation, something went wrong";
 				log.Error(msg);
-				return req.CreateErrorResponse(HttpStatusCode.InternalServerError, msg);
+				return req.CreateErrorResponse(HttpStatusCode.BadRequest, msg);
 			}
-            
-			if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
-            
-			return req.CreateResponse(HttpStatusCode.OK, "WebHook call successful");
         }
     }
 }

@@ -61,23 +61,24 @@ namespace AzureGameRoomsScaler
             return items;
         }
 
-        public async Task ModifyVMStateAsync(string VMID, VMState newState)
+        public async Task<VMDetailsUpdateResult> ModifyVMStateAsync(string VMID, VMState newState)
         {
             CloudTable table = tableClient.GetTableReference(tableName);
             TableOperation retrieveOperation = TableOperation.Retrieve<VMDetailsEntity>(VMID, VMID);
 
             TableResult retrievedResult = await table.ExecuteAsync(retrieveOperation);
-            VMDetailsEntity updateEntity = (VMDetailsEntity)retrievedResult.Result;
+            VMDetailsEntity vmdetails = (VMDetailsEntity)retrievedResult.Result;
 
-            if (updateEntity != null)
+            if (vmdetails != null)
             {
-                updateEntity.State = newState;
-                TableOperation updateOperation = TableOperation.Replace(updateEntity);
+                vmdetails.State = newState;
+                TableOperation updateOperation = TableOperation.Replace(vmdetails);
                 await table.ExecuteAsync(updateOperation);
+                return VMDetailsUpdateResult.UpdateOK;
             }
             else
             {
-                throw new Exception($"VMDetailsEntity with VMID {VMID} not found");
+                return VMDetailsUpdateResult.VMNotFound;
             }
         }
 
@@ -114,5 +115,11 @@ namespace AzureGameRoomsScaler
         Running,
         MarkedForDeallocation,
         Deallocated,
+    }
+
+    public enum VMDetailsUpdateResult
+    {
+        UpdateOK,
+        VMNotFound
     }
 }
