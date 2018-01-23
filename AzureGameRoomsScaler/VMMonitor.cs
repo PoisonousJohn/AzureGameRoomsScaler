@@ -34,21 +34,30 @@ namespace AzureGameRoomsScaler
 				//get the VM name
 				string resourceId = activityLog.resourceId.ToString(); // /subscriptions/6bd0e514-c783-4dac-92d2-6788744eee7a/resourceGroups/lala3/providers/Microsoft.Compute/virtualMachines/lala3
 				string vmName = resourceId.Substring(resourceId.LastIndexOf('/') + 1);
-                if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Succeeded")
+                if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Started")
+                {
+                    log.Info($"VM with name {vmName} is being created");
+                    await TableStorageHelper.Instance.AddVMDetailsAsync(vmName, VMState.Creating);
+                }
+                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} created");
+                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running);
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/restart/action" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} rebooted");
+                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running);
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/deallocate/action" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} deallocated");
+                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Deallocated);
                 }
                 else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
                 {
                     log.Info($"VM with name {vmName} started - was deallocated before");
+                    await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running);
                 }
             }
 			else
