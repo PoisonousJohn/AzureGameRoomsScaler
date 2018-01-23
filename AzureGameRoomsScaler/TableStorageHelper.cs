@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace AzureGameRoomsScaler
 {
+
     public sealed class TableStorageHelper
     {
         //singleton implementation stolen from http://csharpindepth.com/Articles/General/Singleton.aspx#lazy
@@ -33,49 +34,76 @@ namespace AzureGameRoomsScaler
             table.CreateIfNotExists();
         }
 
-        public async Task AddVMDetailsAsync(string VM_ID, VMState state)
+        public async Task AddVMDetailsAsync(string VMID, VMState state)
         {
-            VMDetailsEntity entity = new VMDetailsEntity(VM_ID, state);
+            VMDetailsEntity entity = new VMDetailsEntity(VMID, state);
             CloudTable table = tableClient.GetTableReference(tableName);
             TableOperation insertOperation = TableOperation.Insert(entity);
             await table.ExecuteAsync(insertOperation);
         }
 
-        public async Task ModifyVMStateAsync(string VM_ID, VMState newState)
+        public async Task<IEnumerable<VMDetailsEntity>> GetAllVMsInStateAsync(VMState state)
         {
             CloudTable table = tableClient.GetTableReference(tableName);
             var query = new TableQuery<VMDetailsEntity>().Where
-                (TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, VM_ID));
+                (TableQuery.GenerateFilterConditionForInt("VMStateValue", QueryComparisons.Equal, Convert.ToInt32(state)));
 
-            var result = table.ExecuteQuery(query);
+            var items = new List<VMDetailsEntity>();
+            //modified from response here: https://stackoverflow.com/a/24270388/1205817
+            TableContinuationToken token = null;
+            do
+            {
+                var seg = await table.ExecuteQuerySegmentedAsync(query, token);
+                token = seg.ContinuationToken;
+                items.AddRange(seg);
+            } while (token != null);
 
-            VMDetailsEntity vmdetails = result.Single(); //will throw if more than one
-            vmdetails.VM_State = newState;
-
-            TableOperation updateOperation = TableOperation.Replace(vmdetails);
-            await table.ExecuteAsync(updateOperation);
+            return items;
         }
+
+        public async Task ModifyVMStateAsync(string VMID, VMState newState)
+        {
+            CloudTable table = tableClient.GetTableReference(tableName);
+            TableOperation retrieveOperation = TableOperation.Retrieve<VMDetailsEntity>(VMID, VMID);
+
+            TableResult retrievedResult = await table.ExecuteAsync(retrieveOperation);
+            VMDetailsEntity updateEntity = (VMDetailsEntity)retrievedResult.Result;
+
+            if (updateEntity != null)
+            {
+                updateEntity.State = newState;
+                TableOperation updateOperation = TableOperation.Replace(updateEntity);
+                await table.ExecuteAsync(updateOperation);
+            }
+            else
+            {
+                throw new Exception($"VMDetailsEntity with VMID {VMID} not found");
+            }
+        }
+
     }
 
     public class VMDetailsEntity : TableEntity
     {
-        public VMDetailsEntity(string VM_ID, VMState VM_state)
+        public VMDetailsEntity(string VMID, VMState VMState)
         {
-            this.PartitionKey = VM_ID;
-            this.RowKey = VM_state.ToString();
+            this.PartitionKey = this.RowKey = VMID;
+            this.State = VMState;
         }
 
-        public VMDetailsEntity() {}
+        public VMDetailsEntity() { }
 
-        public string VM_ID
+        public string VMID
         {
             get { return this.PartitionKey; }
         }
 
-        public VMState VM_State
+        public int VMStateValue { get; set; } //for use by the Azure client libraries only
+        [IgnoreProperty]
+        public VMState State
         {
-            get { return (VMState)Enum.Parse(typeof(VMState), this.RowKey); }
-            set { this.RowKey = value.ToString(); }
+            get { return (VMState)VMStateValue; }
+            set { VMStateValue = (int)value; }
         }
 
     }

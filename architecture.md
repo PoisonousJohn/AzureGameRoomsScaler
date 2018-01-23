@@ -27,10 +27,11 @@ Else, this operation should use ARM API to create a new VM. The VM will be marke
 - *MarkVMForDeallocation(VM_ID)*. This will mark the VM as MarkedForDeallocation in the storage.
 - *GetAvailableVMs*. This operation will return details about all VMs that are in the Running state.
 
-Since most queries will target VM_ID and some will target VM_State, the Table Storage schema consists of
+At this state, PartionKey and RowKey are both equal to VM_ID, the Table Storage schema consists of
 
 - PartitionKey: VM_ID
-- Row_Key: VM_State
+- RowKey: VM_ID
+- VM_State: holds one of the values described before
 - Other properties TBD
 
 ## FAQ 
