@@ -24,7 +24,7 @@ namespace AzureGameRoomsScaler
             public NodeRooms[] nodes { get; set; }
         }
         [FunctionName("ReportGameRooms")]
-        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "report/gamerooms")]HttpRequestMessage req, TraceWriter log)
+        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post")]HttpRequestMessage req, TraceWriter log)
         {
             var payload = await req.Content.ReadAsStringAsync();
             var nodes = JsonConvert.DeserializeObject<Request>(payload);
