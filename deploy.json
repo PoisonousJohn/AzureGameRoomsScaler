@@ -1,78 +1,63 @@
 {
     "variables": {
-        "storageName": "[concat(uniqueString(parameters('name')), 'storage')]",
+        "storageName"         : "[concat(uniqueString(parameters('name')), 'storage')]",
         "vmDetailsStorageName": "[concat(uniqueString(parameters('name')), 'vmdetails')]",
-        "hostingPlanName": "[concat(toLower(parameters('name')), 'freeplan')]"
+        "hostingPlanName"     : "[concat(toLower(parameters('name')), 'freeplan')]",
+        "activityLogAlertName": "[concat('VMActivityAlert', uniqueString(resourceGroup().name))]",
+        "actionGroupName"     : "[concat('ScalerVMActivities', substring(uniqueString(resourceGroup().name), 0, 4))]",
+        "actionGroupShortName": "[concat('scalervms', substring(uniqueString(resourceGroup().name), 0, 3))]"
     },
     "parameters": {
         "name": {
-            "type": "string",
+            "type"    : "string",
             "metadata": {
                 "description": "It's your Azure Function's domain name. Make sure it is unique, as this will determine Function's DNS"
             }
         },
         "location": {
-            "type": "string",
+            "type"        : "string",
             "defaultValue": "North Europe",
-            "metadata": {
+            "metadata"    : {
                 "description": "The Azure datacenter's location where your resources will be deployed"
             }
         },
         "ClientId": {
-            "type": "securestring",
+            "type"    : "securestring",
             "metadata": {
                 "description": "Service Principal Id which can be used by functions to create VMs"
             }
         },
         "ClientSecret": {
-            "type": "securestring",
+            "type"    : "securestring",
             "metadata": {
                 "description": "Service Principal Secret which can be used by functions to create VMs"
             }
         },
         "DefaultVMImage": {
-            "type": "string",
+            "type"        : "string",
             "defaultValue": "",
-            "metadata": {
+            "metadata"    : {
                 "description": "If you want server VMs to be deployed with default image, specify it in this parameter. You can override it during deployment of specific VM"
             }
         },
         "GameServerPortRange": {
-            "type": "string",
+            "type"        : "string",
             "defaultValue": "",
-            "metadata": {
+            "metadata"    : {
                 "description": "If your game server needs specific port range by default, specify it here. You can override this during deployment of specific VM"
             }
         },
         "FuncsGitRepo": {
-            "type": "string",
+            "type"        : "string",
             "defaultValue": "https://github.com/PoisonousJohn/AzureGameRoomsScaler"
-        },
-        "activityLogAlertName": {
-            "type": "string",
-            "metadata": {
-                "description": "Unique name (within the Resource Group) for the Activity log alert - used by VMMonitor Function"
-            }
-        },
-        "actionGroupName": {
-            "type": "string",
-            "metadata": {
-                "description": "Unique name (within the Resource Group) for the Action group for the Activity Log alert - used by VMMonitor Function"
-            }
-        },
-        "actionGroupShortName": {
-            "type": "string",
-            "metadata": {
-                "description": "Short name (maximum 12 characters) for the Action group for the Activity Log alert - used by VMMonitor Function"
-            }
         }
     },
     "resources": [{
-            "name": "MainResources",
-            "type": "Microsoft.Resources/deployments",
+            "name"      : "MainResources",
+            "type"      : "Microsoft.Resources/deployments",
             "apiVersion": "2016-09-01",
             "properties": {
-                "mode": "Incremental",
+                "mode"        : "Incremental",
                 "templateLink": {
                     "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-funcapp.json"
                 },
@@ -96,12 +81,12 @@
             }
         },
         {
-            "name": "SiteSettings",
-            "type": "Microsoft.Resources/deployments",
+            "name"      : "SiteSettings",
+            "type"      : "Microsoft.Resources/deployments",
             "apiVersion": "2016-09-01",
-            "dependsOn": ["[resourceId('Microsoft.Resources/deployments', 'MainResources')]"],
+            "dependsOn" : ["[resourceId('Microsoft.Resources/deployments', 'MainResources')]"],
             "properties": {
-                "mode": "Incremental",
+                "mode"        : "Incremental",
                 "templateLink": {
                     "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/func-app-config.json"
                 },
@@ -137,12 +122,12 @@
             }
         },
         {
-            "name": "VMMonitor",
-            "type": "Microsoft.Resources/deployments",
+            "name"      : "VMMonitor",
+            "type"      : "Microsoft.Resources/deployments",
             "apiVersion": "2016-09-01",
-            "dependsOn": ["[resourceId('Microsoft.Resources/deployments', 'MainResources')]"],
+            "dependsOn" : ["[resourceId('Microsoft.Resources/deployments', 'MainResources')]"],
             "properties": {
-                "mode": "Incremental",
+                "mode"        : "Incremental",
                 "templateLink": {
                     "uri": "https://raw.githubusercontent.com/PoisonousJohn/AzureGameRoomsScaler/master/deploy-activitylog-alert.json"
                 },
@@ -151,18 +136,18 @@
                         "value": "[parameters('name')]"
                     },
                     "activityLogAlertName": {
-                        "value": "[parameters('activityLogAlertName')]"
+                        "value": "[variables('activityLogAlertName')]"
                     },
                     "actionGroupName": {
-                        "value": "[parameters('actionGroupName')]"
+                        "value": "[variables('actionGroupName')]"
                     },
                     "actionGroupShortName": {
-                        "value": "[parameters('actionGroupShortName')]"
+                        "value": "[variables('actionGroupShortName')]"
                     }
                 }
             }
         }
     ],
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema"       : "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0"
 }
