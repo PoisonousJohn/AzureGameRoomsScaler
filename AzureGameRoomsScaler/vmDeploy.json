@@ -2,6 +2,10 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "vmName": {
+            "type": "string",
+            "defaultValue": ""
+        },
         "location": {
             "type": "string"
         },
@@ -28,7 +32,7 @@
     },
     "variables": {
         "networkSecurityGroupName": "[concat(resourceGroup().name, '_nsg')]",
-        "virtualMachineName": "[concat('node', uniqueString(deployment().name))]",
+        "virtualMachineName": "[if(greater(length(parameters('vmName')), 0), parameters('vmName'), concat('node', uniqueString(deployment().name)))]",
         "subnetName": "[concat(resourceGroup().name, '_subnet')]",
         "virtualNetworkName": "[concat(resourceGroup().name, '_vnet')]",
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
@@ -123,7 +127,7 @@
                         "autoUpgradeMinorVersion": true,
                         "settings": {
                             "timestamp" : 5,
-                            "commandToExecute": "[concat('echo \"echo \\\"export \\$1=\\\\\\\"\\$2\\\\\\\"\\\" | tee -a /etc/profile /etc/bash.bashrc\" >> registerEnvVar.sh && sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '&nodeId=', variables('virtualMachineName') ,'\" && echo \"nameserver 168.63.129.16\" >> /etc/resolv.conf')]"
+                            "commandToExecute": "[concat('echo \"echo \\\"export \\$1=\\\\\\\"\\$2\\\\\\\"\\\" | tee -a /etc/profile /etc/bash.bashrc\" >> registerEnvVar.sh && sh registerEnvVar.sh REPORT_ROOMS_URL \"', parameters('reportGameroomsUrl'), '\"')]"
                         }
                     }
                 }
