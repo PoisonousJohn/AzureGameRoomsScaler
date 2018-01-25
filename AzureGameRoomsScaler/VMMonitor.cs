@@ -18,10 +18,17 @@ namespace AzureGameRoomsScaler
 		private static string VMMONITOR_VERBOSE = "VMMONITOR_VERBOSE";
         private static string VM_NOT_FOUND_MESSAGE = "VM NOT FOUND: ";
 
+        private static string VM_OPERATION = "Microsoft.Compute/virtualMachines/";
+        private static string CREATE_VM_OPERATION = "Microsoft.Compute/virtualMachines/write";
+        private static string RESTART_VM_OPERATION = "Microsoft.Compute/virtualMachines/restart/action";
+        private static string DEALLOCATE_VM_OPERATION = "Microsoft.Compute/virtualMachines/deallocate/action";
+        private static string START_VM_OPERATION = "Microsoft.Compute/virtualMachines/start/action";
+        private static string OPERATION_SUCCEEDED = "Succeeded";
+        private static string OPERATION_STARTED = "Started";
+
         [FunctionName("VMMonitor")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "VMMonitor")]HttpRequestMessage req, TraceWriter log)
         {
-            // Get request body
             dynamic dataobject = await req.Content.ReadAsAsync<object>();
             //log.Info(dataobject.ToString());
             
@@ -31,35 +38,35 @@ namespace AzureGameRoomsScaler
             if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info(activityLog.ToString());
 
             //confirm that this is indeed a VM operation
-            if (activityLog.operationName.ToString().StartsWith("Microsoft.Compute/virtualMachines/"))
+            if (activityLog.operationName.ToString().StartsWith(VM_OPERATION))
             {
 				//get the VM name
-				string resourceId = activityLog.resourceId.ToString(); // /subscriptions/6bd0e514-c783-4dac-92d2-6788744eee7a/resourceGroups/lala3/providers/Microsoft.Compute/virtualMachines/lala3
+				string resourceId = activityLog.resourceId.ToString(); // returns /subscriptions/6bd0e514-c783-4dac-92d2-6788744eee7a/resourceGroups/lala3/providers/Microsoft.Compute/virtualMachines/lala3
 				string vmName = resourceId.Substring(resourceId.LastIndexOf('/') + 1);
-                if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Started")
+                if (activityLog.operationName == CREATE_VM_OPERATION && activityLog.status == OPERATION_STARTED)
                 {
                     log.Info($"VM with name {vmName} is being created");
                     await TableStorageHelper.Instance.AddVMDetailsAsync(vmName, VMState.Creating);
                 }
-                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/write" && activityLog.status == "Succeeded")
+                else if (activityLog.operationName == CREATE_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
                     log.Info($"VM with name {vmName} created");
                     if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running)== VMDetailsUpdateResult.VMNotFound)
                         return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
-                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/restart/action" && activityLog.status == "Succeeded")
+                else if (activityLog.operationName == RESTART_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
                     log.Info($"VM with name {vmName} rebooted");
                     if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running)== VMDetailsUpdateResult.VMNotFound)
                         return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
-                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/deallocate/action" && activityLog.status == "Succeeded")
+                else if (activityLog.operationName == DEALLOCATE_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
                     log.Info($"VM with name {vmName} deallocated");
                     if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Deallocated) == VMDetailsUpdateResult.VMNotFound)
                         return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
                 }
-                else if (activityLog.operationName == "Microsoft.Compute/virtualMachines/start/action" && activityLog.status == "Succeeded")
+                else if (activityLog.operationName == START_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
                     log.Info($"VM with name {vmName} started - was deallocated before");
                     if(await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.Running) == VMDetailsUpdateResult.VMNotFound)
