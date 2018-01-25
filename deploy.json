@@ -3,7 +3,7 @@
         "storageName"         : "[concat(uniqueString(parameters('name')), 'storage')]",
         "vmDetailsStorageName": "[concat(uniqueString(parameters('name')), 'vmdetails')]",
         "hostingPlanName"     : "[concat(toLower(parameters('name')), 'freeplan')]",
-        "activityLogAlertName": "[concat('VMActivityAlert', uniqueString(resourceGroup().name))]",
+        "activityLogAlertName": "[concat('VMActivityAlert', resourceGroup().name)]",
         "actionGroupName"     : "[concat('ScalerVMActivities', substring(uniqueString(resourceGroup().name), 0, 4))]",
         "actionGroupShortName": "[concat('scalervms', substring(uniqueString(resourceGroup().name), 0, 3))]"
     },
