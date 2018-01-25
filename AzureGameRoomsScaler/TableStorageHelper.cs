@@ -34,21 +34,22 @@ namespace AzureGameRoomsScaler
             table.CreateIfNotExists();
         }
 
-        public async Task AddVMDetailsAsync(string VMID, VMState state)
+        public async Task AddVMEntityAsync(VMDetails newVM)
         {
-            VMDetailsEntity entity = new VMDetailsEntity(VMID, state);
+            ValidateVMDetails(newVM);
+
             CloudTable table = tableClient.GetTableReference(tableName);
-            TableOperation insertOperation = TableOperation.Insert(entity);
+            TableOperation insertOperation = TableOperation.Insert(newVM);
             await table.ExecuteAsync(insertOperation);
         }
 
-        public async Task<IEnumerable<VMDetailsEntity>> GetAllVMsInStateAsync(VMState state)
+        public async Task<IEnumerable<VMDetails>> GetAllVMsInStateAsync(VMState state)
         {
             CloudTable table = tableClient.GetTableReference(tableName);
-            var query = new TableQuery<VMDetailsEntity>().Where
+            var query = new TableQuery<VMDetails>().Where
                 (TableQuery.GenerateFilterConditionForInt("VMStateValue", QueryComparisons.Equal, Convert.ToInt32(state)));
 
-            var items = new List<VMDetailsEntity>();
+            var items = new List<VMDetails>();
             //modified from response here: https://stackoverflow.com/a/24270388/1205817
             TableContinuationToken token = null;
             do
@@ -61,17 +62,19 @@ namespace AzureGameRoomsScaler
             return items;
         }
 
-        public async Task<VMDetailsUpdateResult> ModifyVMStateAsync(string VMID, VMState newState)
+        public async Task<VMDetailsUpdateResult> ModifyVMDetailsAsync(VMDetails updatedVM)
         {
+            ValidateVMDetails(updatedVM);
+
             CloudTable table = tableClient.GetTableReference(tableName);
-            TableOperation retrieveOperation = TableOperation.Retrieve<VMDetailsEntity>(VMID, VMID);
+            TableOperation retrieveOperation = TableOperation.Retrieve<VMDetails>(updatedVM.VMID, updatedVM.VMID);
 
             TableResult retrievedResult = await table.ExecuteAsync(retrieveOperation);
-            VMDetailsEntity vmdetails = (VMDetailsEntity)retrievedResult.Result;
+            VMDetails vmdetails = (VMDetails)retrievedResult.Result;
 
             if (vmdetails != null)
             {
-                vmdetails.State = newState;
+                vmdetails.State = updatedVM.State;
                 TableOperation updateOperation = TableOperation.Replace(vmdetails);
                 await table.ExecuteAsync(updateOperation);
                 return VMDetailsUpdateResult.UpdateOK;
@@ -82,19 +85,25 @@ namespace AzureGameRoomsScaler
             }
         }
 
+        public void ValidateVMDetails(VMDetails entity)
+        {
+            if (string.IsNullOrEmpty(entity.VMID))
+                throw new ArgumentException($"{nameof(entity.VMID)} should not be null");
+        }
+
     }
 
-    public class VMDetailsEntity : TableEntity
+    public class VMDetails : TableEntity
     {
-        public VMDetailsEntity(string VMID, VMState VMState)
+        public VMDetails(string VMID, VMState VMState)
         {
             this.PartitionKey = this.RowKey = VMID;
             this.State = VMState;
         }
 
-        public VMDetailsEntity() { }
+        public VMDetails() { }
 
-        public string VMID
+        public string VMID //ID of the VM
         {
             get { return this.PartitionKey; }
         }

@@ -14,7 +14,7 @@ namespace AzureGameRoomsScaler
         [FunctionName("MarkVMForDeallocation")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "node/deallocate")]HttpRequestMessage req, TraceWriter log)
         {
-
+            log.Info("MarkVMForDeallocation Function was called");
             // Get POST body
             dynamic data = await req.Content.ReadAsAsync<object>();
 
@@ -24,7 +24,7 @@ namespace AzureGameRoomsScaler
             //trim it just in case
             vmName = vmName.Trim();
 
-            if (await TableStorageHelper.Instance.ModifyVMStateAsync(vmName, VMState.MarkedForDeallocation) == VMDetailsUpdateResult.VMNotFound)
+            if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(vmName, VMState.MarkedForDeallocation)) == VMDetailsUpdateResult.VMNotFound)
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, $"VM with name {vmName} not found");
 
             return vmName == null
