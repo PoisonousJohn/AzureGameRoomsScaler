@@ -22,8 +22,7 @@ If there is at least one VM in the Creating state, the operation should exit.
 Else if there is at least one VM in the MarkedForDeletion state, its state will change to Running and the operation should exit.
 Else if there is at least one VM in the Deallocated state, then the operation will call ARM API to start this VM again and its state should change to Creating.
 Else, this operation should use ARM API to create a new VM. The VM will be marked as Creating state in the storage. When it is created, there will be a mechanism that will update our storage with the new details of the new VM and set its status to Running. (mechanism will probably be Function + Event Grid)
-- *GetNumberOfGameRooms(VM_ID)*. This would ask the VM (via a well-known REST API method) for the current running game rooms/sessions. If there are zero, this operation will call the DeallocateVM operation.
-- *DeallocateVM(VM_ID)*. This will deallocate the VM via Azure ARM API and the associated line from the storage.
+- *ReportGameRoomsNumber(VM_ID)*. This would ask the VM (via a well-known REST API method) for the current running game rooms/sessions. If there are zero, this operation will deallocate the VM via a call to Azure API.
 - *MarkVMForDeallocation(VM_ID)*. This will mark the VM as MarkedForDeallocation in the storage.
 - *GetAvailableVMs*. This operation will return details about all VMs that are in the Running state.
 
