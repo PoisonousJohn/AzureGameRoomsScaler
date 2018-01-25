@@ -72,10 +72,16 @@ namespace AzureGameRoomsScaler
                                 : ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"].ToString();
 
 
+            string vmName = "node" + System.Guid.NewGuid().ToString("N").Substring(0, 7);
+
+            var details = new VMDetails(vmName, VMState.Creating);
+            await TableStorageHelper.Instance.AddVMEntityAsync(details);
+
             log.Info("Creating VM");
             var appSettings = ConfigurationManager.AppSettings;
 
             var parameters = JsonConvert.SerializeObject(new Dictionary<string, Dictionary<string, object>> {
+                    { "vmName", new Dictionary<string, object> { { "value", vmName } } },
                     { "location", new Dictionary<string, object> { { "value", nodeParams.Region } } },
                     { "virtualMachineSize",  new Dictionary<string, object> { { "value", nodeParams.Size } } },
                     { "adminUserName",   new Dictionary<string, object> { { "value", appSettings["VM_ADMIN_NAME"]?.ToString() ?? "default_gs_admin" } } },
@@ -85,7 +91,9 @@ namespace AzureGameRoomsScaler
                     { "vmImage", new Dictionary<string, object> { { "value", vmImage } } },
                 });
 
-            var deployment = await AzureMgmtCredentials.instance.Azure.Deployments
+            log.Info($"Creating VM: {vmName}");
+
+            var deploymentTask =  AzureMgmtCredentials.instance.Azure.Deployments
                 .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
                 .WithExistingResourceGroup(nodeParams.ResourceGroup)
                 .WithTemplate(System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json"))
@@ -93,10 +101,20 @@ namespace AzureGameRoomsScaler
                 .WithMode(DeploymentMode.Incremental)
                 .CreateAsync();
 
-            log.Info($"VM created: { JsonConvert.SerializeObject(deployment.Outputs)}");
+            // ensure that deployment started by waiting for 10 secs
+            // then we don't need to wait for it completion
+            // Azure Monitor should report "Created" state of VM
+            await Task.WhenAny(deploymentTask, Task.Delay(10000));
 
 
-            return req.CreateResponse(HttpStatusCode.OK);
+            var result = new Dictionary<string, string>
+            {
+                { "nodeId", vmName }
+            };
+
+            return req.CreateResponse(HttpStatusCode.OK,
+                        JsonConvert.SerializeObject(result),
+                        "application/json");
         }
     }
 }
