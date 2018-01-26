@@ -93,6 +93,7 @@ namespace AzureGameRoomsScaler
 
             log.Info($"Creating VM: {vmName}");
 
+            // not awaiting here intentionally, since we want to return response immediately
             var deploymentTask =  AzureMgmtCredentials.instance.Azure.Deployments
                 .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
                 .WithExistingResourceGroup(nodeParams.ResourceGroup)
@@ -100,12 +101,6 @@ namespace AzureGameRoomsScaler
                 .WithParameters(parameters)
                 .WithMode(DeploymentMode.Incremental)
                 .CreateAsync();
-
-            // ensure that deployment started by waiting for 10 secs
-            // then we don't need to wait for it completion
-            // Azure Monitor should report "Created" state of VM
-            await Task.WhenAny(deploymentTask, Task.Delay(10000));
-
 
             var result = new Dictionary<string, string>
             {
