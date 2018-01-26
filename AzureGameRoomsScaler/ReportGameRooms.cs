@@ -33,14 +33,43 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, "Nodes payload not found.");
             }
 
+            List<string> deallocatedVMs = new List<string>();
+
             foreach (var node in nodes.nodes)
             {
                 log.Info($"Reported {node.nodeId} has {node.rooms} rooms");
+                if(node.rooms == 0)
+                {
+                    //get the state of the corresponding VM
+                    var vm = await TableStorageHelper.Instance.GetVMByID(node.nodeId.Trim());
+                    if(vm.State == VMState.MarkedForDeallocation)
+                    {
+                        //VM has zero rooms and marked for deallocation
+                        //it's fate is sealed, bye bye! :)
+                        await DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
+                        deallocatedVMs.Add(vm.VMID);
+                    }
+                }
             }
 
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            resp.Content = new StringContent(payload);
+            resp.Content = new StringContent("Deallocated VMs " + JsonConvert.SerializeObject(deallocatedVMs));
             return resp;
+        }
+
+        public static async Task DeallocateVMAsync(string VMID, string resourceGroup)
+        {
+            // not awaiting here intentionally, since we want to return response immediately
+            var task = AzureMgmtCredentials.instance.Azure.VirtualMachines.DeallocateAsync(resourceGroup, VMID);
+
+            // we do not wait for VM deallocation
+            // so let's give it few seconds to start and return in case we have deployment exception
+            // like service principal error
+            await Task.WhenAny(task, Task.Delay(1000));
+            if (task.IsCompleted && task.IsFaulted)
+            {
+                throw task.Exception;
+            }
         }
     }
 }

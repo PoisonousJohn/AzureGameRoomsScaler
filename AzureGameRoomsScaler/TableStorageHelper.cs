@@ -69,7 +69,7 @@ namespace AzureGameRoomsScaler
             ValidateVMDetails(updatedVM);
 
             CloudTable table = tableClient.GetTableReference(tableName);
-            TableOperation retrieveOperation = TableOperation.Retrieve<VMDetails>(updatedVM.VMID, updatedVM.VMID);
+            TableOperation retrieveOperation = TableOperation.Retrieve<VMDetails>(updatedVM.ResourceGroup, updatedVM.VMID);
 
             TableResult retrievedResult = await table.ExecuteAsync(retrieveOperation);
             VMDetails vmdetails = (VMDetails)retrievedResult.Result;
@@ -87,10 +87,58 @@ namespace AzureGameRoomsScaler
             }
         }
 
+        public async Task<VMDetailsUpdateResult> ModifyVMStateByIdAsync(string VMID, VMState state)
+        {
+            if(string.IsNullOrEmpty(VMID))
+                throw new Exception($"{nameof(VMID)} should have a value");
+
+            CloudTable table = tableClient.GetTableReference(tableName);
+
+            VMDetails vm = await GetVMByID(VMID);
+            vm.State = state;
+            TableOperation updateOperation = TableOperation.Replace(vm);
+
+
+            await table.ExecuteAsync(updateOperation);
+            return VMDetailsUpdateResult.UpdateOK;
+        }
+
+        public async Task<VMDetails> GetVMByID(string VMID)
+        {
+            if (string.IsNullOrEmpty(VMID))
+                throw new Exception($"{nameof(VMID)} should have a value");
+
+            CloudTable table = tableClient.GetTableReference(tableName);
+            var query = new TableQuery<VMDetails>().Where
+                (TableQuery.GenerateFilterCondition(nameof(VMDetails.RowKey), QueryComparisons.Equal, VMID));
+
+            var items = new List<VMDetails>();
+            //modified from response here: https://stackoverflow.com/a/24270388/1205817
+            TableContinuationToken token = null;
+            do
+            {
+                var seg = await table.ExecuteQuerySegmentedAsync(query, token);
+                token = seg.ContinuationToken;
+                items.AddRange(seg);
+            } while (token != null);
+
+            if (items.Count == 0)
+                throw new Exception($"No Virtual Machines were found with the name {VMID}. ");
+            else if (items.Count != 1)
+                throw new Exception($"More than 1 Virtual Machines were found with the name {VMID}. Database is probably corrupt");
+            else
+            {
+                return items.Single();
+            }
+        }
+
         public void ValidateVMDetails(VMDetails entity)
         {
             if (string.IsNullOrEmpty(entity.VMID))
                 throw new ArgumentException($"{nameof(entity.VMID)} should not be null");
+
+            if (string.IsNullOrEmpty(entity.ResourceGroup))
+                throw new ArgumentException($"{nameof(entity.ResourceGroup)} should not be null");
         }
 
     }
@@ -98,10 +146,13 @@ namespace AzureGameRoomsScaler
     [JsonObject(MemberSerialization.OptIn)]
     public class VMDetails : TableEntity
     {
-        public VMDetails(string VMID, VMState VMState)
+        public VMDetails(string VMID, string resourceGroup, VMState VMState)
         {
-            this.PartitionKey = this.RowKey = VMID;
+            this.PartitionKey = resourceGroup;
+            this.RowKey = VMID;
+
             this.State = VMState;
+
         }
 
         public VMDetails() { }
@@ -109,10 +160,17 @@ namespace AzureGameRoomsScaler
         [JsonProperty("id")]
         public string VMID //ID of the VM
         {
+            get { return this.RowKey; }
+        }
+
+        [JsonProperty("RG")]
+        public string ResourceGroup
+        {
             get { return this.PartitionKey; }
         }
 
         public int VMStateValue { get; set; } //for use by the Azure client libraries only
+
         [IgnoreProperty]
         [JsonProperty("state")]
         [JsonConverter(typeof(StringEnumConverter))]

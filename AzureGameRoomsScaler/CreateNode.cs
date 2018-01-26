@@ -98,7 +98,7 @@ namespace AzureGameRoomsScaler
 
                 string vmName = "node" + System.Guid.NewGuid().ToString("N").Substring(0, 7);
 
-                var details = new VMDetails(vmName, VMState.Creating);
+                var details = new VMDetails(vmName, nodeParams.ResourceGroup, VMState.Creating);
                 await TableStorageHelper.Instance.AddVMEntityAsync(details);
 
                 log.Info("Creating VM");
