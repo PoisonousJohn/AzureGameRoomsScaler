@@ -6,6 +6,8 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace AzureGameRoomsScaler
 {
@@ -93,6 +95,7 @@ namespace AzureGameRoomsScaler
 
     }
 
+    [JsonObject(MemberSerialization.OptIn)]
     public class VMDetails : TableEntity
     {
         public VMDetails(string VMID, VMState VMState)
@@ -103,6 +106,7 @@ namespace AzureGameRoomsScaler
 
         public VMDetails() { }
 
+        [JsonProperty("id")]
         public string VMID //ID of the VM
         {
             get { return this.PartitionKey; }
@@ -110,6 +114,8 @@ namespace AzureGameRoomsScaler
 
         public int VMStateValue { get; set; } //for use by the Azure client libraries only
         [IgnoreProperty]
+        [JsonProperty("state")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public VMState State
         {
             get { return (VMState)VMStateValue; }

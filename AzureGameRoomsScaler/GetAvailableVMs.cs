@@ -12,7 +12,7 @@ namespace AzureGameRoomsScaler
     public static class GetAvailableVMs
     {
         [FunctionName("GetAvailableVMs")]
-        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "node/getavailable")]HttpRequestMessage req, TraceWriter log)
+        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "node/available")]HttpRequestMessage req, TraceWriter log)
         {
             log.Info("GetAvailableVMs Function was called");
             var vms = await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.Running);
