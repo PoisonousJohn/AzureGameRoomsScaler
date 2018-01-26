@@ -138,7 +138,7 @@ namespace AzureGameRoomsScaler
                 var result = new Dictionary<string, string>
                 {
                     { "nodeId", vmName },
-                    { "Result", nameof(VMState.Creating) }
+                    { "State", nameof(VMState.Creating) }
                 };
 
                 return req.CreateResponse(HttpStatusCode.OK,
