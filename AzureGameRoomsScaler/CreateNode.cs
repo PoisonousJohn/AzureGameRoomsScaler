@@ -8,6 +8,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace AzureGameRoomsScaler
 {
@@ -67,20 +68,44 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, new System.ArgumentException("Port range for game server should be specified when deploying"));
             }
 
-            string portRange = !string.IsNullOrEmpty(nodeParams.PortRange)
-                                ? nodeParams.PortRange
-                                : ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"].ToString();
+            //find out if there is any VM in MarkedForDeallocation state
+            var vmsInMarkedForDeallocationState = await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.MarkedForDeallocation);
+            if (vmsInMarkedForDeallocationState.Count() > 0)
+            {
+                //get the first one
+                var vm = vmsInMarkedForDeallocationState.First();
+                //set it as running
+                vm.State = VMState.Running;
+                if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm) == VMDetailsUpdateResult.VMNotFound)
+                    throw new System.Exception($"Error updating VM with ID {vm.VMID}");
+
+                var result = new Dictionary<string, string>
+                {
+                    { "nodeId", vm.VMID },
+                    { "Result", "Re-using an old VM" }
+                };
+
+                return req.CreateResponse(HttpStatusCode.OK,
+                            JsonConvert.SerializeObject(result),
+                            "application/json");
+            }
+
+            else
+            {
+                string portRange = !string.IsNullOrEmpty(nodeParams.PortRange)
+                                    ? nodeParams.PortRange
+                                    : ConfigurationManager.AppSettings["GAMESERVER_PORT_RANGE"].ToString();
 
 
-            string vmName = "node" + System.Guid.NewGuid().ToString("N").Substring(0, 7);
+                string vmName = "node" + System.Guid.NewGuid().ToString("N").Substring(0, 7);
 
-            var details = new VMDetails(vmName, VMState.Creating);
-            await TableStorageHelper.Instance.AddVMEntityAsync(details);
+                var details = new VMDetails(vmName, VMState.Creating);
+                await TableStorageHelper.Instance.AddVMEntityAsync(details);
 
-            log.Info("Creating VM");
-            var appSettings = ConfigurationManager.AppSettings;
+                log.Info("Creating VM");
+                var appSettings = ConfigurationManager.AppSettings;
 
-            var parameters = JsonConvert.SerializeObject(new Dictionary<string, Dictionary<string, object>> {
+                var parameters = JsonConvert.SerializeObject(new Dictionary<string, Dictionary<string, object>> {
                     { "vmName", new Dictionary<string, object> { { "value", vmName } } },
                     { "location", new Dictionary<string, object> { { "value", nodeParams.Region } } },
                     { "virtualMachineSize",  new Dictionary<string, object> { { "value", nodeParams.Size } } },
@@ -91,34 +116,36 @@ namespace AzureGameRoomsScaler
                     { "vmImage", new Dictionary<string, object> { { "value", vmImage } } },
                 });
 
-            log.Info($"Creating VM: {vmName}");
+                log.Info($"Creating VM: {vmName}");
 
-            // not awaiting here intentionally, since we want to return response immediately
-            var deploymentTask =  AzureMgmtCredentials.instance.Azure.Deployments
-                .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
-                .WithExistingResourceGroup(nodeParams.ResourceGroup)
-                .WithTemplate(System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json"))
-                .WithParameters(parameters)
-                .WithMode(DeploymentMode.Incremental)
-                .CreateAsync();
+                // not awaiting here intentionally, since we want to return response immediately
+                var deploymentTask = AzureMgmtCredentials.instance.Azure.Deployments
+                    .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
+                    .WithExistingResourceGroup(nodeParams.ResourceGroup)
+                    .WithTemplate(System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json"))
+                    .WithParameters(parameters)
+                    .WithMode(DeploymentMode.Incremental)
+                    .CreateAsync();
 
-            // when don't want to await completion of ARM deployment since it can take up to 5 mins
-            // so let's give it few seconds to start and return in case we have deployment exception
-            // like service principal error
-            await Task.WhenAny(deploymentTask, Task.Delay(1000));
-            if (deploymentTask.IsCompleted && deploymentTask.IsFaulted)
-            {
-                throw deploymentTask.Exception;
+                // when don't want to await completion of ARM deployment since it can take up to 5 mins
+                // so let's give it few seconds to start and return in case we have deployment exception
+                // like service principal error
+                await Task.WhenAny(deploymentTask, Task.Delay(1000));
+                if (deploymentTask.IsCompleted && deploymentTask.IsFaulted)
+                {
+                    throw deploymentTask.Exception;
+                }
+
+                var result = new Dictionary<string, string>
+                {
+                    { "nodeId", vmName },
+                    { "Result", "Created a new VM" }
+                };
+
+                return req.CreateResponse(HttpStatusCode.OK,
+                            JsonConvert.SerializeObject(result),
+                            "application/json");
             }
-
-            var result = new Dictionary<string, string>
-            {
-                { "nodeId", vmName }
-            };
-
-            return req.CreateResponse(HttpStatusCode.OK,
-                        JsonConvert.SerializeObject(result),
-                        "application/json");
         }
     }
 }
