@@ -44,10 +44,15 @@ namespace AzureGameRoomsScaler
                     var vm = await TableStorageHelper.Instance.GetVMByID(node.nodeId.Trim());
                     if(vm.State == VMState.MarkedForDeallocation)
                     {
+                        deallocatedVMs.Add(vm.VMID);
+
                         //VM has zero rooms and marked for deallocation
                         //it's fate is sealed, bye bye! :)
                         await DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
-                        deallocatedVMs.Add(vm.VMID);
+
+                        //mark it as deallocated in table storage
+                        vm.State = VMState.Deallocated;
+                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
                     }
                 }
             }
