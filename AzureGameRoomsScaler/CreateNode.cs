@@ -71,7 +71,7 @@ namespace AzureGameRoomsScaler
             //find out if there is any VM in MarkedForDeallocation state
             var vmsInMarkedForDeallocationState = await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.MarkedForDeallocation);
             var vm = vmsInMarkedForDeallocationState.FirstOrDefault();
-            if (!string.IsNullOrEmpty(vm.PartitionKey)) //if it's not empty, i.e. we didn't get the 'default'
+            if (vm != null)
             {
                 //set it as running
                 vm.State = VMState.Running;
@@ -89,7 +89,7 @@ namespace AzureGameRoomsScaler
                             "application/json");
             }
 
-            else
+            else //vm is null, so no VMs in MarkedForDeallocation state, so let's create a new one
             {
                 string portRange = !string.IsNullOrEmpty(nodeParams.PortRange)
                                     ? nodeParams.PortRange
