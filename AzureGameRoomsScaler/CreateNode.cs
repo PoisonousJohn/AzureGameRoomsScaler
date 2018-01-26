@@ -102,6 +102,15 @@ namespace AzureGameRoomsScaler
                 .WithMode(DeploymentMode.Incremental)
                 .CreateAsync();
 
+            // when don't want to await completion of ARM deployment since it can take up to 5 mins
+            // so let's give it few seconds to start and return in case we have deployment exception
+            // like service principal error
+            await Task.WhenAny(deploymentTask, Task.Delay(1000));
+            if (deploymentTask.IsCompleted && deploymentTask.IsFaulted)
+            {
+                throw deploymentTask.Exception;
+            }
+
             var result = new Dictionary<string, string>
             {
                 { "nodeId", vmName }
