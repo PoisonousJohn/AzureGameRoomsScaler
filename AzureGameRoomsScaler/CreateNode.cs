@@ -70,10 +70,9 @@ namespace AzureGameRoomsScaler
 
             //find out if there is any VM in MarkedForDeallocation state
             var vmsInMarkedForDeallocationState = await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.MarkedForDeallocation);
-            if (vmsInMarkedForDeallocationState.Count() > 0)
+            var vm = vmsInMarkedForDeallocationState.FirstOrDefault();
+            if (!string.IsNullOrEmpty(vm.PartitionKey)) //if it's not empty, i.e. we didn't get the 'default'
             {
-                //get the first one
-                var vm = vmsInMarkedForDeallocationState.First();
                 //set it as running
                 vm.State = VMState.Running;
                 if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm) == VMDetailsUpdateResult.VMNotFound)
@@ -82,7 +81,7 @@ namespace AzureGameRoomsScaler
                 var result = new Dictionary<string, string>
                 {
                     { "nodeId", vm.VMID },
-                    { "Result", "Re-using an old VM" }
+                    { "State", nameof(VMState.Running) }
                 };
 
                 return req.CreateResponse(HttpStatusCode.OK,
@@ -139,7 +138,7 @@ namespace AzureGameRoomsScaler
                 var result = new Dictionary<string, string>
                 {
                     { "nodeId", vmName },
-                    { "Result", "Created a new VM" }
+                    { "Result", nameof(VMState.Creating) }
                 };
 
                 return req.CreateResponse(HttpStatusCode.OK,

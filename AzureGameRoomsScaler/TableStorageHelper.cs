@@ -49,7 +49,7 @@ namespace AzureGameRoomsScaler
         {
             CloudTable table = tableClient.GetTableReference(tableName);
             var query = new TableQuery<VMDetails>().Where
-                (TableQuery.GenerateFilterConditionForInt("VMStateValue", QueryComparisons.Equal, Convert.ToInt32(state)));
+                (TableQuery.GenerateFilterConditionForInt(nameof(VMDetails.VMStateValue), QueryComparisons.Equal, Convert.ToInt32(state)));
 
             var items = new List<VMDetails>();
             //modified from response here: https://stackoverflow.com/a/24270388/1205817
