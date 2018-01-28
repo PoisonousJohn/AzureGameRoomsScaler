@@ -64,43 +64,33 @@ namespace AzureGameRoomsScaler
             return items;
         }
 
-        public async Task<VMDetailsUpdateResult> ModifyVMDetailsAsync(VMDetails updatedVM)
+        public async Task ModifyVMDetailsAsync(VMDetails updatedVM)
         {
             ValidateVMDetails(updatedVM);
 
             CloudTable table = tableClient.GetTableReference(tableName);
-            TableOperation retrieveOperation = TableOperation.Retrieve<VMDetails>(updatedVM.ResourceGroup, updatedVM.VMID);
 
-            TableResult retrievedResult = await table.ExecuteAsync(retrieveOperation);
-            VMDetails vmdetails = (VMDetails)retrievedResult.Result;
+            TableOperation updateOperation = TableOperation.Replace(updatedVM);
+            var x = await table.ExecuteAsync(updateOperation);
+            
+          
 
-            if (vmdetails != null)
-            {
-                vmdetails.State = updatedVM.State;
-                TableOperation updateOperation = TableOperation.Replace(vmdetails);
-                await table.ExecuteAsync(updateOperation);
-                return VMDetailsUpdateResult.UpdateOK;
-            }
-            else
-            {
-                return VMDetailsUpdateResult.VMNotFound;
-            }
         }
 
-        public async Task<VMDetailsUpdateResult> ModifyVMStateByIdAsync(string VMID, VMState state)
+        public async Task ModifyVMStateByIdAsync(string VMID, VMState state)
         {
-            if(string.IsNullOrEmpty(VMID))
+            if (string.IsNullOrEmpty(VMID))
                 throw new Exception($"{nameof(VMID)} should have a value");
 
             CloudTable table = tableClient.GetTableReference(tableName);
 
             VMDetails vm = await GetVMByID(VMID);
             vm.State = state;
-            TableOperation updateOperation = TableOperation.Replace(vm);
+            TableOperation updateOperation = TableOperation.Merge(vm);
 
 
             await table.ExecuteAsync(updateOperation);
-            return VMDetailsUpdateResult.UpdateOK;
+            
         }
 
         public async Task<VMDetails> GetVMByID(string VMID)
@@ -155,6 +145,12 @@ namespace AzureGameRoomsScaler
 
         }
 
+        public VMDetails(string VMID, string resourceGroup, VMState VMState, string IP) :
+            this(VMID, resourceGroup, VMState)
+        {
+            this.IP = IP;
+        }
+
         public VMDetails() { }
 
         [JsonProperty("id")]
@@ -180,6 +176,8 @@ namespace AzureGameRoomsScaler
             set { VMStateValue = (int)value; }
         }
 
+        public string IP { get; set; }
+
     }
 
     public enum VMState
@@ -190,9 +188,4 @@ namespace AzureGameRoomsScaler
         Deallocated,
     }
 
-    public enum VMDetailsUpdateResult
-    {
-        UpdateOK,
-        VMNotFound
-    }
 }
