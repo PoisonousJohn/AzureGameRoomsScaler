@@ -24,9 +24,8 @@ namespace AzureGameRoomsScaler
             //trim it just in case
             vmName = vmName.Trim();
 
-            if (await TableStorageHelper.Instance.ModifyVMStateByIdAsync(vmName, VMState.MarkedForDeallocation) == VMDetailsUpdateResult.VMNotFound)
-                return req.CreateErrorResponse(HttpStatusCode.BadRequest, $"VM with name {vmName} not found");
-
+            await TableStorageHelper.Instance.ModifyVMStateByIdAsync(vmName, VMState.MarkedForDeallocation);
+           
             return vmName == null
                 ? req.CreateResponse(HttpStatusCode.BadRequest, "Please pass a vmName in the request body")
                 : req.CreateResponse(HttpStatusCode.OK, $"VM with name {vmName} was successfully marked for deallocation");
