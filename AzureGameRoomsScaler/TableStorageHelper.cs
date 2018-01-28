@@ -67,6 +67,7 @@ namespace AzureGameRoomsScaler
         public async Task ModifyVMDetailsAsync(VMDetails updatedVM)
         {
             ValidateVMDetails(updatedVM);
+            updatedVM.ETag = "*"; //required for the Merge operation
 
             CloudTable table = tableClient.GetTableReference(tableName);
 
