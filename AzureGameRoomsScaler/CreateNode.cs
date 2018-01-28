@@ -75,8 +75,7 @@ namespace AzureGameRoomsScaler
             {
                 //set it as running
                 vm.State = VMState.Running;
-                if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm) == VMDetailsUpdateResult.VMNotFound)
-                    throw new System.Exception($"Error updating VM with ID {vm.VMID}");
+                await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
 
                 var result = new Dictionary<string, string>
                 {
