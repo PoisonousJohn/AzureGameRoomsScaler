@@ -70,7 +70,7 @@ namespace AzureGameRoomsScaler
 
             CloudTable table = tableClient.GetTableReference(tableName);
 
-            TableOperation updateOperation = TableOperation.Replace(updatedVM);
+            TableOperation updateOperation = TableOperation.Merge(updatedVM);
             var x = await table.ExecuteAsync(updateOperation);
             
           
