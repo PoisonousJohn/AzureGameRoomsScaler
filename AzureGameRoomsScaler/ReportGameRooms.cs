@@ -59,7 +59,7 @@ namespace AzureGameRoomsScaler
             }
 
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            resp.Content = new StringContent("Deallocated VMs " + JsonConvert.SerializeObject(deallocatedVMs));
+            resp.Content = new StringContent("VMs in deallocating state " + JsonConvert.SerializeObject(deallocatedVMs));
             return resp;
         }
 
