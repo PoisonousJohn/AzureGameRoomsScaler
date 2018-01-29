@@ -73,8 +73,8 @@ namespace AzureGameRoomsScaler
 
             TableOperation updateOperation = TableOperation.Merge(updatedVM);
             var x = await table.ExecuteAsync(updateOperation);
-            
-          
+
+
 
         }
 
@@ -91,7 +91,7 @@ namespace AzureGameRoomsScaler
 
 
             await table.ExecuteAsync(updateOperation);
-            
+
         }
 
         public async Task<VMDetails> GetVMByID(string VMID)
@@ -183,10 +183,11 @@ namespace AzureGameRoomsScaler
 
     public enum VMState
     {
-        Creating,
-        Running,
-        MarkedForDeallocation,
-        Deallocated,
+        Creating = 0,
+        Running = 1,
+        MarkedForDeallocation = 2,
+        Deallocating = 3,
+        Deallocated = 4,
     }
 
 }

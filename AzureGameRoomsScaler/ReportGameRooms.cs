@@ -48,10 +48,11 @@ namespace AzureGameRoomsScaler
 
                         //VM has zero rooms and marked for deallocation
                         //it's fate is sealed, bye bye! :)
-                        await DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
+                        await AzureAPIHelper.DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
 
-                        //mark it as deallocated in table storage
-                        vm.State = VMState.Deallocated;
+                        //mark it with the deallocating state in table storage
+                        //VMMonitor Function will be called when it is finally deallocated
+                        vm.State = VMState.Deallocating;
                         await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
                     }
                 }
@@ -62,19 +63,6 @@ namespace AzureGameRoomsScaler
             return resp;
         }
 
-        public static async Task DeallocateVMAsync(string VMID, string resourceGroup)
-        {
-            // not awaiting here intentionally, since we want to return response immediately
-            var task = AzureMgmtCredentials.instance.Azure.VirtualMachines.DeallocateAsync(resourceGroup, VMID);
-
-            // we do not wait for VM deallocation
-            // so let's give it few seconds to start and return in case we have deployment exception
-            // like service principal error
-            await Task.WhenAny(task, Task.Delay(1000));
-            if (task.IsCompleted && task.IsFaulted)
-            {
-                throw task.Exception;
-            }
-        }
+        
     }
 }

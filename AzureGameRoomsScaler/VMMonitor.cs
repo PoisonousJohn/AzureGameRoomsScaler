@@ -50,7 +50,7 @@ namespace AzureGameRoomsScaler
                 {
                     log.Info($"VM with name {VMID} created");
                     //when the VM is finally created we need to i)set its state as Running and ii)get its Public IP
-                    string ip = await AzureMgmtCredentials.instance.GetVMPublicIP(VMID, resourceGroup);
+                    string ip = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
                     await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running, ip));
                 }
                 else if (activityLog.operationName == RESTART_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
@@ -67,8 +67,8 @@ namespace AzureGameRoomsScaler
                 else if (activityLog.operationName == START_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
                     log.Info($"VM with name {VMID} started - was deallocated before");
-                    //when the VM is started from deallocation it gets a new public IP
-                    string ip = await AzureMgmtCredentials.instance.GetVMPublicIP(VMID, resourceGroup);
+                    //when the VM is started from deallocation it gets a new public IP, so add it to the DB
+                    string ip = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
                     await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running, ip));
                 }
 

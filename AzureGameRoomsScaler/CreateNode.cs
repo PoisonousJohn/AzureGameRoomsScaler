@@ -73,7 +73,7 @@ namespace AzureGameRoomsScaler
             var vm = vmsInMarkedForDeallocationState.FirstOrDefault();
             if (vm != null)
             {
-                //set it as running
+                //set it as running so as not to be deallocated when game rooms are 0
                 vm.State = VMState.Running;
                 await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
 
@@ -88,7 +88,7 @@ namespace AzureGameRoomsScaler
                             "application/json");
             }
 
-            else //vm is null, so no VMs in MarkedForDeallocation state, so let's create a new one
+            else //no VMs in MarkedForDeallocation state, so let's create a new one
             {
                 string portRange = !string.IsNullOrEmpty(nodeParams.PortRange)
                                     ? nodeParams.PortRange
@@ -117,7 +117,7 @@ namespace AzureGameRoomsScaler
                 log.Info($"Creating VM: {vmName}");
 
                 // not awaiting here intentionally, since we want to return response immediately
-                var deploymentTask = AzureMgmtCredentials.instance.Azure.Deployments
+                var deploymentTask = AzureMgmtCredentials.Instance.Azure.Deployments
                     .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
                     .WithExistingResourceGroup(nodeParams.ResourceGroup)
                     .WithTemplate(System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json"))
