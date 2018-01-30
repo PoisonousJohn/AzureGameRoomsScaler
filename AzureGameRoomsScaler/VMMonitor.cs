@@ -23,7 +23,7 @@ namespace AzureGameRoomsScaler
         private const string DEALLOCATE_VM_OPERATION = "Microsoft.Compute/virtualMachines/deallocate/action";
         private const string START_VM_OPERATION = "Microsoft.Compute/virtualMachines/start/action";
         private const string OPERATION_SUCCEEDED = "Succeeded";
-        private const string OPERATION_STARTED = "Started";
+        private const string OPERATION_FAILED = "Failed";
 
         [FunctionName("VMMonitor")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "VMMonitor")]HttpRequestMessage req, TraceWriter log)
@@ -52,10 +52,7 @@ namespace AzureGameRoomsScaler
                     return req.CreateResponse(HttpStatusCode.OK);
                 }
 
-                bool operationSucceeded = activityLog.status == OPERATION_SUCCEEDED;
-                string operationName = (string)activityLog.operationName;
-
-                if (!operationSucceeded)
+                if (activityLog.status == OPERATION_FAILED)
                 {
                     vm.State = VMState.Failed;
                     log.Error($"VM {VMID} is failed: {activityLog.subStatus}");
@@ -63,6 +60,13 @@ namespace AzureGameRoomsScaler
                     return req.CreateResponse(HttpStatusCode.InternalServerError);
                 }
 
+                if (!activityLog.status != OPERATION_SUCCEEDED)
+                {
+                    log.Error($"VM {VMID} is in a state we aren't interested in: <{activityLog.status}>");
+                    return req.CreateResponse(HttpStatusCode.OK);
+                }
+
+                string operationName = (string)activityLog.operationName;
                 string ip;
                 switch (operationName)
                 {
