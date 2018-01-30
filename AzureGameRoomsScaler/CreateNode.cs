@@ -134,14 +134,8 @@ namespace AzureGameRoomsScaler
                     throw deploymentTask.Exception;
                 }
 
-                var result = new Dictionary<string, string>
-                {
-                    { "nodeId", vmName },
-                    { "State", nameof(VMState.Creating) }
-                };
-
                 return req.CreateResponse(HttpStatusCode.OK,
-                            JsonConvert.SerializeObject(result),
+                            JsonConvert.SerializeObject(details),
                             "application/json");
             }
         }

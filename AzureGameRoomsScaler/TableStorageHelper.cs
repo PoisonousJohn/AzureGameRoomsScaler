@@ -114,9 +114,14 @@ namespace AzureGameRoomsScaler
             } while (token != null);
 
             if (items.Count == 0)
-                throw new Exception($"No Virtual Machines were found with the name {VMID}. ");
-            else if (items.Count != 1)
+            {
+                return null;
+            }
+
+            if (items.Count != 1)
+            {
                 throw new Exception($"More than 1 Virtual Machines were found with the name {VMID}. Database is probably corrupt");
+            }
             else
             {
                 return items.Single();
@@ -189,6 +194,7 @@ namespace AzureGameRoomsScaler
         MarkedForDeallocation = 2,
         Deallocating = 3,
         Deallocated = 4,
+        Failed = 5,
     }
 
 }
