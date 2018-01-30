@@ -177,6 +177,7 @@ namespace AzureGameRoomsScaler
             set { VMStateValue = (int)value; }
         }
 
+        [JsonProperty("ip")]
         public string IP { get; set; }
 
     }
