@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json;
 
 namespace AzureGameRoomsScaler
 {
@@ -17,7 +18,7 @@ namespace AzureGameRoomsScaler
         /// <param name="log"></param>
         /// <returns></returns>
         [FunctionName("MarkVMForDeallocation")]
-        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "node/deallocate")]HttpRequestMessage req, TraceWriter log)
+        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "node/deallocate")]HttpRequestMessage req, TraceWriter log)
         {
             log.Info("MarkVMForDeallocation Function was called");
             // Get POST body
@@ -29,12 +30,26 @@ namespace AzureGameRoomsScaler
             //trim it just in case
             vmName = vmName.Trim();
 
+            var vm = await TableStorageHelper.Instance.GetVMByID(vmName);
+            if (vm == null)
+            {
+                return req.CreateErrorResponse(HttpStatusCode.BadRequest, $"VM {vmName} not found");
+            }
+
+            vm.State = VMState.MarkedForDeallocation;
+
+            if (vm.RoomsNumber == 0)
+            {
+                await AzureAPIHelper.DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
+                vm.State = VMState.Deallocating;
+            }
+
             //modify its state in the DB
-            await TableStorageHelper.Instance.ModifyVMStateByIdAsync(vmName, VMState.MarkedForDeallocation);
-           
+            await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
+
             return vmName == null
                 ? req.CreateResponse(HttpStatusCode.BadRequest, "Please pass a vmName in the request body")
-                : req.CreateResponse(HttpStatusCode.OK, $"VM with name {vmName} was successfully marked for deallocation");
+                : req.CreateResponse(HttpStatusCode.OK, JsonConvert.SerializeObject(vm));
         }
     }
 }

@@ -38,6 +38,8 @@ namespace AzureGameRoomsScaler
 
         public int VMStateValue { get; set; } //for use by the Azure client libraries only
 
+		public int RoomsNumber { get; set; }
+
         [IgnoreProperty]
         [JsonProperty("state")]
         [JsonConverter(typeof(StringEnumConverter))]

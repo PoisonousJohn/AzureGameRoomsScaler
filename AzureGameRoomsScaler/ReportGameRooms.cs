@@ -53,8 +53,9 @@ namespace AzureGameRoomsScaler
                         //mark it with the deallocating state in table storage
                         //VMMonitor Function will be called when it is finally deallocated
                         vm.State = VMState.Deallocating;
-                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
                     }
+                    vm.RoomsNumber = node.rooms;
+                    await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
                 }
             }
 
@@ -63,6 +64,6 @@ namespace AzureGameRoomsScaler
             return resp;
         }
 
-        
+
     }
 }
