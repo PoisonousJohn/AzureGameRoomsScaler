@@ -33,6 +33,7 @@ namespace AzureGameRoomsScaler
             //log.Info(dataobject.ToString());
 
             if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
+
             //get Azure Monitor detailed activity log
             var activityLog = dataobject.data.context.activityLog;
             if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info(activityLog.ToString());
@@ -40,36 +41,39 @@ namespace AzureGameRoomsScaler
             //confirm that this is indeed a VM operation
             if (activityLog.operationName.ToString().StartsWith(VM_OPERATION))
             {
-                //get the VM name
+                string resourceGroup = activityLog.resourceGroupName;//get the resource group
+                //get the VM ID
                 string resourceId = activityLog.resourceId.ToString(); // returns /subscriptions/6bd0e514-c783-4dac-92d2-6788744eee7a/resourceGroups/lala3/providers/Microsoft.Compute/virtualMachines/lala3
-                string vmName = resourceId.Substring(resourceId.LastIndexOf('/') + 1);
+                string VMID = resourceId.Substring(resourceId.LastIndexOf('/') + 1);
+
                 if (activityLog.operationName == CREATE_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
-                    log.Info($"VM with name {vmName} created");
-                    if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(vmName, VMState.Running)) == VMDetailsUpdateResult.VMNotFound)
-                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
+                    log.Info($"VM with name {VMID} created");
+                    //when the VM is finally created we need to i)set its state as Running and ii)get its Public IP
+                    string ip = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
+                    await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running, ip));
                 }
                 else if (activityLog.operationName == RESTART_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
-                    log.Info($"VM with name {vmName} rebooted");
-                    if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(vmName, VMState.Running)) == VMDetailsUpdateResult.VMNotFound)
-                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
+                    log.Info($"VM with name {VMID} rebooted");
+                    await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running));
                 }
                 else if (activityLog.operationName == DEALLOCATE_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
-                    log.Info($"VM with name {vmName} deallocated");
-                    if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(vmName, VMState.Deallocated)) == VMDetailsUpdateResult.VMNotFound)
-                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
+                    log.Info($"VM with name {VMID} deallocated");
+                    //when the VM is deallocated its public IP is removed, too
+                    await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Deallocated, string.Empty)); 
                 }
                 else if (activityLog.operationName == START_VM_OPERATION && activityLog.status == OPERATION_SUCCEEDED)
                 {
-                    log.Info($"VM with name {vmName} started - was deallocated before");
-                    if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(vmName, VMState.Running)) == VMDetailsUpdateResult.VMNotFound)
-                        return req.CreateErrorResponse(HttpStatusCode.BadRequest, VM_NOT_FOUND_MESSAGE + vmName);
+                    log.Info($"VM with name {VMID} started - was deallocated before");
+                    //when the VM is started from deallocation it gets a new public IP, so add it to the DB
+                    string ip = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
+                    await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running, ip));
                 }
 
                 if (ConfigurationManager.AppSettings[VMMONITOR_VERBOSE] == "true") log.Info("----------------------------------------------");
-                return req.CreateResponse(HttpStatusCode.OK, $"WebHook call for VM:'{vmName}' with operation:'{activityLog.operationName}' and status:'{activityLog.status}' was successful");
+                return req.CreateResponse(HttpStatusCode.OK, $"WebHook call for VM:'{VMID}' with operation:'{activityLog.operationName}' and status:'{activityLog.status}' was successful");
             }
             else
             {

@@ -10,7 +10,12 @@ namespace AzureGameRoomsScaler
 {
     public static class MarkVMForDeallocation
     {
-
+        /// <summary>
+        /// Marks the VM's state as "MarkedForDeallocation" on the DB. Performs *NO* operation on the VM itself.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
         [FunctionName("MarkVMForDeallocation")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = "node/deallocate")]HttpRequestMessage req, TraceWriter log)
         {
@@ -24,9 +29,9 @@ namespace AzureGameRoomsScaler
             //trim it just in case
             vmName = vmName.Trim();
 
-            if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(vmName, VMState.MarkedForDeallocation)) == VMDetailsUpdateResult.VMNotFound)
-                return req.CreateErrorResponse(HttpStatusCode.BadRequest, $"VM with name {vmName} not found");
-
+            //modify its state in the DB
+            await TableStorageHelper.Instance.ModifyVMStateByIdAsync(vmName, VMState.MarkedForDeallocation);
+           
             return vmName == null
                 ? req.CreateResponse(HttpStatusCode.BadRequest, "Please pass a vmName in the request body")
                 : req.CreateResponse(HttpStatusCode.OK, $"VM with name {vmName} was successfully marked for deallocation");

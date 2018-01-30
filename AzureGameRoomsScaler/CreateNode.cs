@@ -73,10 +73,9 @@ namespace AzureGameRoomsScaler
             var vm = vmsInMarkedForDeallocationState.FirstOrDefault();
             if (vm != null)
             {
-                //set it as running
+                //set it as running so as not to be deallocated when game rooms are 0
                 vm.State = VMState.Running;
-                if (await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm) == VMDetailsUpdateResult.VMNotFound)
-                    throw new System.Exception($"Error updating VM with ID {vm.VMID}");
+                await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
 
                 var result = new Dictionary<string, string>
                 {
@@ -89,7 +88,7 @@ namespace AzureGameRoomsScaler
                             "application/json");
             }
 
-            else //vm is null, so no VMs in MarkedForDeallocation state, so let's create a new one
+            else //no VMs in MarkedForDeallocation state, so let's create a new one
             {
                 string portRange = !string.IsNullOrEmpty(nodeParams.PortRange)
                                     ? nodeParams.PortRange
@@ -98,7 +97,7 @@ namespace AzureGameRoomsScaler
 
                 string vmName = "node" + System.Guid.NewGuid().ToString("N").Substring(0, 7);
 
-                var details = new VMDetails(vmName, VMState.Creating);
+                var details = new VMDetails(vmName, nodeParams.ResourceGroup, VMState.Creating);
                 await TableStorageHelper.Instance.AddVMEntityAsync(details);
 
                 log.Info("Creating VM");
@@ -118,7 +117,7 @@ namespace AzureGameRoomsScaler
                 log.Info($"Creating VM: {vmName}");
 
                 // not awaiting here intentionally, since we want to return response immediately
-                var deploymentTask = AzureMgmtCredentials.instance.Azure.Deployments
+                var deploymentTask = AzureMgmtCredentials.Instance.Azure.Deployments
                     .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
                     .WithExistingResourceGroup(nodeParams.ResourceGroup)
                     .WithTemplate(System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json"))

@@ -33,14 +33,36 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, "Nodes payload not found.");
             }
 
+            List<string> deallocatedVMs = new List<string>();
+
             foreach (var node in nodes.nodes)
             {
                 log.Info($"Reported {node.nodeId} has {node.rooms} rooms");
+                if(node.rooms == 0)
+                {
+                    //get the state of the corresponding VM
+                    var vm = await TableStorageHelper.Instance.GetVMByID(node.nodeId.Trim());
+                    if(vm.State == VMState.MarkedForDeallocation)
+                    {
+                        deallocatedVMs.Add(vm.VMID);
+
+                        //VM has zero rooms and marked for deallocation
+                        //it's fate is sealed, bye bye! :)
+                        await AzureAPIHelper.DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
+
+                        //mark it with the deallocating state in table storage
+                        //VMMonitor Function will be called when it is finally deallocated
+                        vm.State = VMState.Deallocating;
+                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
+                    }
+                }
             }
 
             var resp = req.CreateResponse(HttpStatusCode.OK);
-            resp.Content = new StringContent(payload);
+            resp.Content = new StringContent(JsonConvert.SerializeObject(new { VMsInDeallocatingState = deallocatedVMs }));
             return resp;
         }
+
+        
     }
 }
