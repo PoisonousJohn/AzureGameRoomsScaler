@@ -60,7 +60,7 @@ namespace AzureGameRoomsScaler
                     return req.CreateResponse(HttpStatusCode.InternalServerError);
                 }
 
-                if (!activityLog.status != OPERATION_SUCCEEDED)
+                if (activityLog.status != OPERATION_SUCCEEDED)
                 {
                     log.Error($"VM {VMID} is in a state we aren't interested in: <{activityLog.status}>");
                     return req.CreateResponse(HttpStatusCode.OK);
