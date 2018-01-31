@@ -38,10 +38,15 @@ namespace AzureGameRoomsScaler
             foreach (var node in nodes.nodes)
             {
                 log.Info($"Reported {node.nodeId} has {node.rooms} rooms");
+                //get the state of the corresponding VM
+                var vm = await TableStorageHelper.Instance.GetVMByID(node.nodeId.Trim());
                 if(node.rooms == 0)
                 {
-                    //get the state of the corresponding VM
-                    var vm = await TableStorageHelper.Instance.GetVMByID(node.nodeId.Trim());
+                    if (vm == null)
+                    {
+                        log.Error($"VM {vm.VMID} not found in DB");
+                        continue;
+                    }
                     if(vm.State == VMState.MarkedForDeallocation)
                     {
                         deallocatedVMs.Add(vm.VMID);
@@ -54,9 +59,9 @@ namespace AzureGameRoomsScaler
                         //VMMonitor Function will be called when it is finally deallocated
                         vm.State = VMState.Deallocating;
                     }
-                    vm.RoomsNumber = node.rooms;
-                    await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
                 }
+                vm.RoomsNumber = node.rooms;
+                await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
             }
 
             var resp = req.CreateResponse(HttpStatusCode.OK);
