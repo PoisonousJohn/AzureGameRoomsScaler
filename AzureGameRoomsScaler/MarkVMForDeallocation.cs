@@ -11,12 +11,7 @@ namespace AzureGameRoomsScaler
 {
     public static class MarkVMForDeallocation
     {
-        /// <summary>
-        /// Marks the VM's state as "MarkedForDeallocation" on the DB. Performs *NO* operation on the VM itself.
-        /// </summary>
-        /// <param name="req"></param>
-        /// <param name="log"></param>
-        /// <returns></returns>
+
         [FunctionName("MarkVMForDeallocation")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "node/deallocate")]HttpRequestMessage req, TraceWriter log)
         {
