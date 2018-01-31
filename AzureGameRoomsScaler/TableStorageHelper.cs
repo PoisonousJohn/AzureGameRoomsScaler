@@ -61,6 +61,14 @@ namespace AzureGameRoomsScaler
             return result;
         }
 
+        /// <summary>
+        /// Used to filter out matching VMs by Size, Region and Resource Group
+        /// </summary>
+        /// <param name="resourceGroup"></param>
+        /// <param name="region"></param>
+        /// <param name="size"></param>
+        /// <param name="state"></param>
+        /// <returns></returns>
         public async Task<IEnumerable<VMDetails>> GetMatchingVMsInStateAsync(string resourceGroup, string region, string size, VMState state)
         {
             CloudTable table = tableClient.GetTableReference(tableName);
