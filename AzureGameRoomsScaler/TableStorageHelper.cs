@@ -30,7 +30,6 @@ namespace AzureGameRoomsScaler
 
             storageAccount = CloudStorageAccount.Parse(storageConnectionString);
 
-            //TODO: how can we get rid of this? probably slows down our execution, it will run only once!
             tableClient = storageAccount.CreateCloudTableClient();
             CloudTable table = tableClient.GetTableReference(tableName);
             table.CreateIfNotExists();
@@ -73,9 +72,6 @@ namespace AzureGameRoomsScaler
 
             TableOperation updateOperation = TableOperation.Merge(updatedVM);
             var x = await table.ExecuteAsync(updateOperation);
-
-
-
         }
 
         public async Task ModifyVMStateByIdAsync(string VMID, VMState state)
@@ -88,10 +84,7 @@ namespace AzureGameRoomsScaler
             VMDetails vm = await GetVMByID(VMID);
             vm.State = state;
             TableOperation updateOperation = TableOperation.Merge(vm);
-
-
             await table.ExecuteAsync(updateOperation);
-
         }
 
         public async Task<VMDetails> GetVMByID(string VMID)
