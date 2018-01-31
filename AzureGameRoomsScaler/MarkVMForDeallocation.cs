@@ -11,6 +11,14 @@ namespace AzureGameRoomsScaler
 {
     public static class MarkVMForDeallocation
     {
+        /// <summary>
+        /// Expects a vmName POST parameter
+        /// Sets the vmName's state to MarkedForDeallocation
+        /// However, if the game rooms count is zero, the VM will be deallocated ASAP
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
 
         [FunctionName("MarkVMForDeallocation")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = "node/deallocate")]HttpRequestMessage req, TraceWriter log)
@@ -31,15 +39,18 @@ namespace AzureGameRoomsScaler
                 return req.CreateErrorResponse(HttpStatusCode.BadRequest, $"VM {vmName} not found");
             }
 
+            //set the state of the requested VM as MarkedForDeallocation
             vm.State = VMState.MarkedForDeallocation;
 
+            //however, if there are no games running on this VM, deallocate it immediately
             if (vm.RoomsNumber == 0)
             {
+                log.Info($"VM with ID {vmName} has zero game rooms so it will be deallocated immediately");
                 await AzureAPIHelper.DeallocateVMAsync(vm.VMID, vm.ResourceGroup);
                 vm.State = VMState.Deallocating;
             }
 
-            //modify its state in the DB
+            //modify the VM state in the DB with the new value
             await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
 
             return vmName == null

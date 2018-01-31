@@ -59,15 +59,17 @@ namespace AzureGameRoomsScaler
                 //set it as running so as not to be deallocated when game rooms are 0
                 vm.State = VMState.Running;
                 await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
-
+                //we're done, this VM can now be used
                 return req.CreateResponse(HttpStatusCode.OK,
                             JsonConvert.SerializeObject(vm),
                             "application/json");
             }
 
+            //search if there are any deallocated VMs
             var deallocatedVM = (await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.Deallocated))
                                     .FirstOrDefault();
 
+            //no deallocated VMs, so let's create a new one
             if (deallocatedVM == null)
             {
                 string vmName = "node" + System.Guid.NewGuid().ToString("N").Substring(0, 7);
@@ -75,7 +77,7 @@ namespace AzureGameRoomsScaler
                                     ?? System.IO.File.ReadAllText(context.FunctionAppDirectory + "/default_key_rsa.pub");
                 string deploymentTemplate = System.IO.File.ReadAllText(context.FunctionAppDirectory + "/vmDeploy.json");
 
-                await DeployNode(vmName, nodeParams, sshKey, deploymentTemplate, log);
+                await DeployNodeAsync(vmName, nodeParams, sshKey, deploymentTemplate, log);
 
                 var details = new VMDetails(vmName, nodeParams.ResourceGroup, VMState.Creating);
                 await TableStorageHelper.Instance.AddVMEntityAsync(details);
@@ -84,7 +86,7 @@ namespace AzureGameRoomsScaler
                             JsonConvert.SerializeObject(details),
                             "application/json");
             }
-            else
+            else//there's at least one deallocated VM, so start the .First() one
             {
                 await AzureAPIHelper.StartDeallocatedVMAsync(deallocatedVM);
                 deallocatedVM.State = VMState.Creating;
@@ -95,7 +97,7 @@ namespace AzureGameRoomsScaler
             }
         }
 
-        private static async Task DeployNode(string vmName, NodeParameters nodeParams, string sshKey, string deploymentTemplate, TraceWriter log)
+        private static async Task DeployNodeAsync(string vmName, NodeParameters nodeParams, string sshKey, string deploymentTemplate, TraceWriter log)
         {
             log.Info("Creating VM");
             var appSettings = ConfigurationManager.AppSettings;
@@ -121,7 +123,7 @@ namespace AzureGameRoomsScaler
 
             log.Info($"Creating VM: {vmName}");
 
-            // not awaiting here intentionally, since we want to return response immediately
+            // not awaiting here intentionally, since we want to return response ASAP
             var deploymentTask = AzureMgmtCredentials.Instance.Azure.Deployments
                 .Define($"NodeDeployment{System.Guid.NewGuid().ToString()}")
                 .WithExistingResourceGroup(nodeParams.ResourceGroup)
