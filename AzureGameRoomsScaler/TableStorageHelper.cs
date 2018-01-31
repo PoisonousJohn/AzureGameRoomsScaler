@@ -44,23 +44,42 @@ namespace AzureGameRoomsScaler
             await table.ExecuteAsync(insertOperation);
         }
 
-        public async Task<IEnumerable<VMDetails>> GetAllVMsInStateAsync(VMState state)
+        private static async Task<IEnumerable<T>> GetAllFromTableAsync<T>(CloudTable table, TableQuery<T> query)
+            where T: ITableEntity, new()
         {
-            CloudTable table = tableClient.GetTableReference(tableName);
-            var query = new TableQuery<VMDetails>().Where
-                (TableQuery.GenerateFilterConditionForInt(nameof(VMDetails.VMStateValue), QueryComparisons.Equal, Convert.ToInt32(state)));
+            var result = new List<T>();
 
-            var items = new List<VMDetails>();
             //modified from response here: https://stackoverflow.com/a/24270388/1205817
             TableContinuationToken token = null;
             do
             {
                 var seg = await table.ExecuteQuerySegmentedAsync(query, token);
                 token = seg.ContinuationToken;
-                items.AddRange(seg);
+                result.AddRange(seg);
             } while (token != null);
 
-            return items;
+            return result;
+        }
+
+        public async Task<IEnumerable<VMDetails>> GetMatchingDeallocatedVMsAsync(string resourceGroup, string region, string size)
+        {
+            CloudTable table = tableClient.GetTableReference(tableName);
+            var query = new TableQuery<VMDetails>()
+                .Where(TableQuery.GenerateFilterConditionForInt(nameof(VMDetails.VMStateValue), QueryComparisons.Equal, (int)VMState.Deallocated))
+                .Where(TableQuery.GenerateFilterCondition(nameof(VMDetails.ResourceGroup), QueryComparisons.Equal, resourceGroup))
+                .Where(TableQuery.GenerateFilterCondition(nameof(VMDetails.Region), QueryComparisons.Equal, region))
+                .Where(TableQuery.GenerateFilterCondition(nameof(VMDetails.Size), QueryComparisons.Equal, size));
+
+            return await GetAllFromTableAsync(table, query);
+        }
+
+        public async Task<IEnumerable<VMDetails>> GetAllVMsInStateAsync(VMState state)
+        {
+            CloudTable table = tableClient.GetTableReference(tableName);
+            var query = new TableQuery<VMDetails>().Where
+                (TableQuery.GenerateFilterConditionForInt(nameof(VMDetails.VMStateValue), QueryComparisons.Equal, Convert.ToInt32(state)));
+
+            return await GetAllFromTableAsync(table, query);
         }
 
         public async Task ModifyVMDetailsAsync(VMDetails updatedVM)

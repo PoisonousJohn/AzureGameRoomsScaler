@@ -7,17 +7,17 @@ namespace AzureGameRoomsScaler
     [JsonObject(MemberSerialization.OptIn)]
     public class VMDetails : TableEntity
     {
-        public VMDetails(string VMID, string resourceGroup, VMState VMState)
+        public VMDetails(string VMID, string resourceGroup, VMState VMState, string size, string region)
         {
-            this.PartitionKey = resourceGroup;
-            this.RowKey = VMID;
-
-            this.State = VMState;
-
+            PartitionKey = resourceGroup;
+            RowKey = VMID;
+            Region = region;
+            Size = Size;
+            State = VMState;
         }
 
         public VMDetails(string VMID, string resourceGroup, VMState VMState, string IP) :
-            this(VMID, resourceGroup, VMState)
+            this(VMID, resourceGroup, VMState, null, null)
         {
             this.IP = IP;
         }
@@ -35,6 +35,13 @@ namespace AzureGameRoomsScaler
         {
             get { return this.PartitionKey; }
         }
+
+        [JsonProperty("region")]
+        public string Region { get; set; }
+
+        [JsonProperty("size")]
+        public string Size { get; set; }
+
 
         public int VMStateValue { get; set; } //for use by the Azure client libraries only
 

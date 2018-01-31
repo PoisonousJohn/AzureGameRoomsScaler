@@ -66,7 +66,8 @@ namespace AzureGameRoomsScaler
             }
 
             //search if there are any deallocated VMs
-            var deallocatedVM = (await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.Deallocated))
+            var deallocatedVM = (await TableStorageHelper.Instance
+                                    .GetMatchingDeallocatedVMsAsync(nodeParams.ResourceGroup, nodeParams.Region, nodeParams.Size))
                                     .FirstOrDefault();
 
             //no deallocated VMs, so let's create a new one
@@ -79,7 +80,8 @@ namespace AzureGameRoomsScaler
 
                 await DeployNodeAsync(vmName, nodeParams, sshKey, deploymentTemplate, log);
 
-                var details = new VMDetails(vmName, nodeParams.ResourceGroup, VMState.Creating);
+                var details = new VMDetails(vmName, nodeParams.ResourceGroup, VMState.Creating,
+                                            nodeParams.Size, nodeParams.Region);
                 await TableStorageHelper.Instance.AddVMEntityAsync(details);
 
                 return req.CreateResponse(HttpStatusCode.OK,

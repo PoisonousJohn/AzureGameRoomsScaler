@@ -74,26 +74,26 @@ namespace AzureGameRoomsScaler
                         log.Info($"VM with name {VMID} created");
                         //when the VM is finally created we need to i)set its state as Running and ii)get its Public IP
                         ip = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
-                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running, ip));
+                        vm.State = VMState.Running;
                         break;
                     case RESTART_VM_OPERATION:
                         log.Info($"VM with name {VMID} rebooted");
-                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running));
+                        vm.State = VMState.Running;
                         break;
                     case DEALLOCATE_VM_OPERATION:
                         log.Info($"VM with name {VMID} deallocated");
                         //when the VM is deallocated its public IP is removed, too
-                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Deallocated, string.Empty));
+                        vm.State = VMState.Deallocated;
                         break;
                     case START_VM_OPERATION:
                         log.Info($"VM with name {VMID} started - was deallocated before");
                         //when the VM is started from deallocation it gets a new public IP, so add it to the DB
-                        ip = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
-                        await TableStorageHelper.Instance.ModifyVMDetailsAsync(new VMDetails(VMID, resourceGroup, VMState.Running, ip));
+                        vm.IP = await AzureAPIHelper.GetVMPublicIP(VMID, resourceGroup);
+                        vm.State = VMState.Running;
                         break;
 
                 }
-
+                await TableStorageHelper.Instance.ModifyVMDetailsAsync(vm);
                 log.Info("----------------------------------------------");
                 return req.CreateResponse(HttpStatusCode.OK, $"WebHook call for VM:'{VMID}' with operation:'{activityLog.operationName}' and status:'{activityLog.status}' was successful");
             }
