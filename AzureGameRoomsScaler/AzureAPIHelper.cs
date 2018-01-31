@@ -9,6 +9,22 @@ namespace AzureGameRoomsScaler
 {
     public static class AzureAPIHelper
     {
+        public static async Task StartDeallocatedVMAsync(VMDetails vm)
+        {
+            // not awaiting here intentionally, since we want to return response immediately
+            var task = AzureMgmtCredentials.Instance.Azure
+                        .VirtualMachines.StartAsync(vm.ResourceGroup, vm.VMID);
+
+            // we do not wait for VM start to complete
+            // so let's give it few seconds to start and return in case we have deployment exception
+            // like service principal error
+            await Task.WhenAny(task, Task.Delay(1000));
+            if (task.IsCompleted && task.IsFaulted)
+            {
+                throw task.Exception;
+            }
+        }
+
         public static async Task DeallocateVMAsync(string VMID, string resourceGroup)
         {
             // not awaiting here intentionally, since we want to return response immediately
