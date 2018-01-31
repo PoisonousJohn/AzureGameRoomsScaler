@@ -51,9 +51,11 @@ namespace AzureGameRoomsScaler
             }
 
             //find out if there is any VM in MarkedForDeallocation state
-            var vmsInMarkedForDeallocationState = await TableStorageHelper.Instance.GetAllVMsInStateAsync(VMState.MarkedForDeallocation);
+            var vm = (await TableStorageHelper.Instance.GetMatchingVMsInStateAsync(
+                        nodeParams.ResourceGroup, nodeParams.Region,
+                        nodeParams.Size, VMState.MarkedForDeallocation))
+                    .FirstOrDefault();
 
-            var vm = vmsInMarkedForDeallocationState.FirstOrDefault();
             if (vm != null)
             {
                 //set it as running so as not to be deallocated when game rooms are 0
@@ -67,7 +69,7 @@ namespace AzureGameRoomsScaler
 
             //search if there are any deallocated VMs
             var deallocatedVM = (await TableStorageHelper.Instance
-                                    .GetMatchingDeallocatedVMsAsync(nodeParams.ResourceGroup, nodeParams.Region, nodeParams.Size))
+                                    .GetMatchingVMsInStateAsync(nodeParams.ResourceGroup, nodeParams.Region, nodeParams.Size, VMState.Deallocated))
                                     .FirstOrDefault();
 
             //no deallocated VMs, so let's create a new one

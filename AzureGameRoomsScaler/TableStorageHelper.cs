@@ -61,11 +61,11 @@ namespace AzureGameRoomsScaler
             return result;
         }
 
-        public async Task<IEnumerable<VMDetails>> GetMatchingDeallocatedVMsAsync(string resourceGroup, string region, string size)
+        public async Task<IEnumerable<VMDetails>> GetMatchingVMsInStateAsync(string resourceGroup, string region, string size, VMState state)
         {
             CloudTable table = tableClient.GetTableReference(tableName);
             var query = new TableQuery<VMDetails>()
-                .Where(TableQuery.GenerateFilterConditionForInt(nameof(VMDetails.VMStateValue), QueryComparisons.Equal, (int)VMState.Deallocated))
+                .Where(TableQuery.GenerateFilterConditionForInt(nameof(VMDetails.VMStateValue), QueryComparisons.Equal, (int)state))
                 .Where(TableQuery.GenerateFilterCondition(nameof(VMDetails.ResourceGroup), QueryComparisons.Equal, resourceGroup))
                 .Where(TableQuery.GenerateFilterCondition(nameof(VMDetails.Region), QueryComparisons.Equal, region))
                 .Where(TableQuery.GenerateFilterCondition(nameof(VMDetails.Size), QueryComparisons.Equal, size));
