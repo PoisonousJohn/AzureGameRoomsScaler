@@ -22,7 +22,7 @@ namespace AzureGameRoomsScaler
         {
             log.Info("MarkVMForDeallocation Function was called");
             // Get POST body
-            dynamic data = await req.Content.ReadAsAsync<object>();
+            dynamic data = JsonConvert.DeserializeObject(await req.Content.ReadAsStringAsync());
 
             // Set name to query string or body data
             string vmName = data?.vmName;
