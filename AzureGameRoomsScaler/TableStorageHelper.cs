@@ -159,14 +159,4 @@ namespace AzureGameRoomsScaler
 
     }
 
-    public enum VMState
-    {
-        Creating = 0,
-        Running = 1,
-        MarkedForDeallocation = 2,
-        Deallocating = 3,
-        Deallocated = 4,
-        Failed = 5,
-    }
-
 }
